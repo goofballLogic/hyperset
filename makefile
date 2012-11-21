@@ -3,10 +3,10 @@ all = test auto-test
 .PHONY: $(all)
 
 test:
-	buster test --reporter specification
+	./node_modules/.bin/buster-test --reporter specification
 
 auto-test:
-	buster autotest --reporter specification
+	./node_modules/.bin/buster-autotest --reporter specification
 
 sublime-test:
-	buster test --reporter dots
+	./node_modules/.bin/buster-test --reporter tap
