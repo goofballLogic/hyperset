@@ -1,0 +1,22 @@
+{
+  "author": "Andrew Stewart Gibson <andrew@goofballLogic.com>",
+  "name": "hyperset",
+  "description": "Node collections (in a restful style)",
+  "version": "0.1.0",
+  "homepage": "http://goofballLogic.github.com/hyperset",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/goofballLogic/hyperset.git"
+  },
+  "main": "./lib/hyperset.js",
+  "scripts": {
+    "test": "make test"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  },
+  "license": "MIT"
+}
