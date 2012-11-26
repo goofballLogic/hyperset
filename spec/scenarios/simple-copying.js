@@ -14,7 +14,7 @@ module.exports = {
 	transitions: [
 		{
 			source: "forms",
-			target: "publishedForm",
+			target: "publishedForms",
 			method: "copy",
 			description: "Publish form"
 		},

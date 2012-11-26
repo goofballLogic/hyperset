@@ -1,5 +1,6 @@
 var hyperset = require("../lib/hyperset"),
 	repo = require("./utils/test-repo"),
+	testServer = require("./utils/test-server"),
 	buster = require("buster")
 	;
 
@@ -13,26 +14,35 @@ describe("Given script with COPY transitions and item in set", function() {
 	
 		repo.flush();
 		this.script = require("./scenarios/simple-copying");
-		var endpoints = this.endpoints = {};
-
-		SUT.initialise(this.script, function(verb, uri, callback) {
-			endpoints[uri] = endpoints[uri] || {};
-			endpoints[uri][verb] = callback;
-		});
-
-		this.setName = this.script.sets[0].name;
+		this.server = new testServer.Server();
+		SUT.initialise(this.script, this.server.build);
+		
 		this.item = { "copying" : "world" };
-		this.postResult = endpoints[this.setName].post(this.item);
+		
+		this.postResult = this.server["forms"]["post-item"](this.item);
 
 	});
 
 	describe("When the item is read", function() {
 
-		itEventually("it should contain a link to GET a transition");
+		before(function() {
+			this.getResult = this.server["forms"]["get-item"]({ id: this.postResult.data.id });
+		});
+
+		it("it should contain a link to GET a transition", function() {
+			var found = this.getResult.data.links.findByRel("copy-to-publishedForms");
+			expect(found).not.toBeNull();
+		});
 
 		describe("and when the transition link is followed", function() {
 
-			itEventually("it should return a representation of a copy with a link to the target set");
+			before(function() {
+				this.getTransition = this.server["forms"]["copy-to-publishedForms"];
+			});
+
+			it("it should return a representation of a copy with a link to the target set", function() {
+				expect(this.getTransition.data.id).not.toEqual(this.getResult.data.id);
+			});
 
 			itEventually("it should return a representation of a copy with a link to the original's set");
 

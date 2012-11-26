@@ -1,7 +1,8 @@
 var hyperset = require("../lib/hyperset"),
 	repo = require("./utils/test-repo"),
 	testServer = require("./utils/test-server"),
-	buster = require("buster")
+	buster = require("buster"),
+	utils = require("./utils/utils.js")
 	;
 
 var SUT = new hyperset.Set(repo);
@@ -25,26 +26,31 @@ describe("Given initialised script,", function() {
 			this.result = this.server[this.setName]["post-item"](this.item);
 		});
 
-		it("it should return a representation with item and links", function() {
+		it("it should return a representation with item, id and links", function() {
 			expect(this.result.data.links).toBeDefined("Links attribute");
 			expect(this.result.data.item).toBeDefined("Item attribute");
+			expect(this.result.data.id).toBeDefined("Item id");
 		});
 
-		it("it should return the item with a link to self", function() {
-			expect(this.result.data.links[0].rel).toEqual("self");
-			expect(this.result.data.links[0].href).toMatch(this.setName + "/", "self link should start with container");
+		it("it should return the item with a link to get self", function() {
+			var selfLink = this.result.data.links[0];
+			expect(selfLink.rel).toEqual("self", "link rel");
+			expect(selfLink.method).toEqual("get-item", "link method");
+			var expectedAction = { id: function() { return true; }, setName: this.setName};
+			expect(selfLink.action).toMatch(expectedAction, "link action");
 		});
 
 		describe("and when I GET the item", function() {
 
 			before(function() {
-				var selfLink = this.result.data.links[0].href;
-				var params = { "id" : selfLink.substring(selfLink.lastIndexOf("/")+1) };
-				this.getSelfResult = this.server[this.setName]["get-item"](params);
+				var selfLink = this.result.data.links[0];
+				this.getSelfResult = this.server[selfLink.action.setName][selfLink.method](selfLink.action);
 			});
 
-			it("it should return me", function() {
-				expect(this.getSelfResult.data).toMatch(this.result.data);
+			it("it should return the stored item", function() {
+				var actual = utils.toJSON(this.getSelfResult.data);
+				var expected = utils.toJSON(this.result.data);
+				expect(actual).toMatch(expected);
 			});
 		});
 
@@ -55,12 +61,14 @@ describe("Given initialised script,", function() {
 			});
 
 			it("it should return set with self link", function() {
-				expect(this.getResult.data.links[0].href).toEqual(this.setName);
+				var selfLink = this.getResult.data.links[0];
+				var expectedLink = { "rel" : "self", "method" : "get-items", "action" : { "setName" : this.setName }};
+				expect(selfLink).toMatch(expectedLink);
 			});
 
 			it("it should return set containing the added item", function() {
 				expect(this.getResult.data.items).toBeDefined("items collection");
-				expect(this.getResult.data.items[0]).toEqual(this.result.data);
+				expect(this.getResult.data.items[0].item).toEqual(this.result.data.item);
 			});
 		});
 	});

@@ -26,7 +26,8 @@ describe("Given script and populated set,", function() {
 		before(function() {
 			var updated = this.updated = this.postResult.data.item;
 			updated["jessie"] = "imran";
-			this.putResult = this.server[this.setName]["put-item"]({ "id" : this.postResult.data.id }, updated);
+			var selfLink = this.postResult.data.findLinkByRel("update");
+			this.putResult = this.server[selfLink.action.setName][selfLink.method](selfLink.action, updated);
 		});
 
 		it("it should say ok", function() {
@@ -45,7 +46,7 @@ describe("Given script and populated set,", function() {
 			});
 
 			it("it should be the same as the updated version", function() {
-				expect(this.getResult.data).toMatch(this.putResult.data);
+				expect(this.getResult.data.item).toMatch(this.putResult.data.item);
 			});
 
 		});
@@ -61,7 +62,7 @@ describe("Given script and populated set,", function() {
 			});
 
 			it("it should return the deleted item", function() {
-				expect(this.deleteResult.data).toMatch(this.putResult.data);
+				expect(this.deleteResult.data.item).toMatch(this.putResult.data.item);
 			});
 
 			describe("and when it is read again", function() {
