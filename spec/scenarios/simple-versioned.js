@@ -2,12 +2,13 @@ module.exports = {
 	name: "Simplest scenario",
 	sets: [
 		{
-			name: "open-documents",
-			versioned: true
+			name: "saved",
+			filters: [
+				{ name: "versioning" }
+			]
 		},
 		{
-			name: "temp-documents",
-			versioned: false
+			name: "working"
 		}
 	]
 };

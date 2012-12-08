@@ -2,27 +2,25 @@ module.exports = {
 	name: "Copy semantics",
 	sets: [
 		{
-			name: "forms"
+			name: "forms",
+			filters: [{
+				name: "transition",
+				target: "publishedForms",
+				method: "copy",
+				description: "Publish form"
+			}]
 		},
 		{
-			name: "publishedForms"
+			name: "publishedForms",
+			filters: [{
+				name: "transition",
+				target: "filledForms",
+				method: "copy",
+				description: "Fill form"
+			}]
 		},
 		{
 			name: "filledForms"
-		}
-	],
-	transitions: [
-		{
-			source: "forms",
-			target: "publishedForms",
-			method: "copy",
-			description: "Publish form"
-		},
-		{
-			source: "publishedForms",
-			target: "filledForms",
-			method: "copy",
-			description: "Fill form"
 		}
 	]
 };

@@ -6,6 +6,6 @@ module.exports.GivenRepoAndConfig = function(scenario, repo) {
 	repo = repo || require("./test-repo");
 	this.sets = new Sets(
 		require("../scenarios/" + scenario),
-		repo
+		{ "repo" : repo }
 	);
 };

@@ -1,5 +1,6 @@
 var utils = require("./utils/utils"),
-	buster = require("buster")
+	buster = require("buster"),
+	hypermedia = require("../lib/hyperset")
 	;
 
 buster.spec.expose();
@@ -9,6 +10,25 @@ describe("Given config and repo", function() {
 	before(function() {
 		require("./utils/test-repo").flush();
 		utils.GivenRepoAndConfig.call(this, "simple");
+	});
+
+	describe("When I follow a link to a non-existant set", function() {
+		var context = this;
+		before(function() {
+			this.sets.links[0].follow(function(err, set) {
+				set.findLink("non-existant").follow(function(err, result) {
+					context.result = result;
+				});
+			});
+		});
+
+		it("it should return a 404 status", function() {
+			expect(this.result.status).toEqual(404);
+		});
+
+		it("it should return NRR", function() {
+			expect(this.result.repr).toBe(hypermedia.NRR);
+		});
 	});
 
 	describe("When I follow the root link to the first set", function() {
@@ -64,13 +84,15 @@ describe("Given config and repo", function() {
 				expect(actual).toMatch(expected);
 			});
 
-			describe("and when I follow the set link", function() {
+			describe("and when I follow the set link's self link", function() {
 
 				before(function(done) {
 					var context = this;
 					this.createResult.repr.findLink("set").follow(function(err, result) {
-						context.setResult = result;
-						done();
+						result.findLink("self").follow(function(err, result) {
+							context.setResult = result;
+							done();
+						});
 					});
 				});
 
