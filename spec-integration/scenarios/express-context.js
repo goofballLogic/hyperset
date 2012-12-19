@@ -6,6 +6,13 @@ var http = require("http"),
 	context.App = function(port) {
 
 		var app = express();
+		app.use(express.bodyParser());
+		app.use(express.methodOverride());
+		app.use(function(req, res, next) {
+			var ret = next();
+			//console.log(req.headers, req.body);
+			return ret;
+		});
 		var server = http.createServer(app);
 		server.listen(port);
 
@@ -13,11 +20,18 @@ var http = require("http"),
 			server.close();
 		};
 
-		app.trigger = function(method, path, accept, data, callback) {
-			if(typeof data === "function") {
+		app.trigger = function(method, path, accept, data, contentType, callback) {
+			if(typeof contentType === "function") {
+				callback = contentType;
+				contentType = null;
+			} else if(typeof data === "function") {
 				callback = data;
 				data = null;
+			} else if(typeof accept === "function") {
+				callback = accept;
+				accept = null;
 			}
+
 			var options = {
 				"host" : "localhost",
 				"port" : port,
@@ -25,8 +39,9 @@ var http = require("http"),
 				"path" : path,
 				"headers" : { }
 			};
-			if(accept) options.headers.accept = accept;
-			
+			if(accept) options.headers["Accept"] = accept;
+			if(contentType) options.headers["Content-Type"] = contentType;
+
 			var req = http.request(options, function(res) {
 				var buffer = "";
 				var thrown = null;

@@ -26,6 +26,26 @@ describe("Given riak-repo", function() {
 			});
 		});
 
+		describe("and remove(setName, itemId, callback) called", function() {
+
+			before(function(done) {
+				var context = this;
+				this.repo.remove(this.storeeSet, this.storee.testid, function(err, result, data, headers) {
+					context.andRemoveArgs = { "err" : err, "result" : result, "data" : data, "headers" : headers };
+					done();
+				});
+			});
+
+			it("it should return no error", function() {
+				expect(this.andRemoveArgs.err).toBeFalsy();
+			});
+
+			it("it should return a 200 code", function() {
+				var code = this.andRemoveArgs.result;
+				expect(code >= 200 && code < 300).toBeTruthy();
+			});
+		});
+
 		it("it should return no error", function() {
 			expect(this.whenStoreArgs.err).toBeFalsy();
 		});
