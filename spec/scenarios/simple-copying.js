@@ -22,5 +22,11 @@ module.exports = {
 		{
 			name: "filledForms"
 		}
-	]
+	],
+	"express": {
+		methods : {
+			"copy-to-publishedForms" : "get",
+			"copy-to-filledForms" : "get"
+		}
+	}
 };

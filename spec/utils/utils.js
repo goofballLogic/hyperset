@@ -3,12 +3,9 @@ module.exports.toJSON = function(obj) {
 };
 module.exports.GivenRepoAndConfig = function(scenario, repo) {
 	var Sets = require("../../lib/hyperset").Sets;
-	repo = repo || require("./test-repo");
-	this.sets = new Sets(
-		require("../scenarios/" + scenario),
-		{ "repo" : repo }
-	);
-	this.repo = repo;
+	this.config = require("../scenarios/" + scenario);
+	this.repo = repo || require("./test-repo");
+	this.sets = new Sets(this.config, { "repo" : this.repo });
 };
 
 module.exports.FakeApp = function() {
@@ -48,4 +45,23 @@ module.exports.FakeApp = function() {
 	function isParameter(bit) {
 		return (bit.length > 0) && (bit[0] === "{") && (bit[bit.length - 1] === "}");
 	}
+};
+
+module.exports.findLinkByRel = function(links, rel) {
+	for(var i = 0; i < links.length; i++)
+		if(links[i].rel==rel) return links[i];
+	return null;
+};
+
+module.exports.runSaveAndComplete = function(context, name, done, fn, arg1, argN) {
+	var fnArgs = [];
+	for(var i = 4; i < arguments.length; i++) { fnArgs.push(arguments[i]); }
+	fnArgs.push(function() {
+		context[name] = arguments;
+		context.data = arguments[1];
+		delete context.json;
+		try { context.json = JSON.parse(context.data); } catch(e){ }
+		done();
+	});
+	fn.apply(context, fnArgs);
 };

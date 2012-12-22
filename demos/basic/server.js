@@ -12,8 +12,10 @@ var config = {
 var app = express().use(express.bodyParser()).use(express.methodOverride()),
 	repo = new riakRepo.Repo("127.0.0.1", 8098, "hyperset-demos-basic"),
 	sets = new hyperset.Sets(config, { "repo" : repo }),
-	adapter = new expressAdapter.Adapter(sets, { "root" : "/basic" })
+	adapter = new expressAdapter.Adapter(sets, { "root" : "/basic", debug : console })
 	;
+
+console.log(sets);
 
 adapter.install(app);
 app.listen(3000);

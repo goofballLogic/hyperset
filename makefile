@@ -5,6 +5,9 @@ all = test auto-test sublime-test riak-test express-test
 test:
 	./node_modules/.bin/buster-test --reporter specification
 
+test-dot:
+	./node_modules/.bin/buster-test
+	
 auto-test:
 	./node_modules/.bin/buster-autotest --reporter specification
 

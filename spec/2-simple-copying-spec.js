@@ -17,7 +17,7 @@ describe("Given copying config and repo", function() {
 			var context = this;
 			context.setGetLinks = {};
 			for(var i = 0; i < this.sets.links.length; i++) {
-				context.setGetLinks[this.sets.links[i].path] = this.sets.links[i];
+				context.setGetLinks[this.sets.links[i].rel] = this.sets.links[i];
 			}
 			this.setGetLinks["forms"].follow(function(err, result) {
 				var createFormLink = result.repr.findLink("create");
@@ -31,7 +31,7 @@ describe("Given copying config and repo", function() {
 
 		it("it should contain a link to the copying state", function() {
 			var actual = this.createResult.repr.findLink("copy-to-publishedForms").path;
-			var expected = this.createResult.repr.findLink("self").path;
+			var expected = this.createResult.repr.findLink("self").path + "/copying-to-publishedForms";
 			expect(actual).toEqual(expected);
 		});
 
@@ -46,9 +46,8 @@ describe("Given copying config and repo", function() {
 			});
 
 			it("it should contain a link to complete the copy", function() {
-				var actual = this.copyingResult.repr.findLink("create").path;
-				var expected = "publishedForms";
-				expect(actual).toEqual(expected);
+				var actual = this.copyingResult.repr.findLink("create");
+				expect(actual).toBeDefined();
 			});
 
 			describe("and when I follow the create link", function() {
@@ -67,7 +66,7 @@ describe("Given copying config and repo", function() {
 
 				it("it should return a link to the further copying state", function() {
 					var actual = this.createResult.repr.findLink("copy-to-filledForms").path;
-					var expected = this.createResult.repr.findLink("self").path;
+					var expected = this.createResult.repr.findLink("self").path + "/copying-to-filledForms";
 					expect(actual).toEqual(expected);
 				});
 

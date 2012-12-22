@@ -41,6 +41,11 @@ describe("Given config and repo", function() {
 			});
 		});
 
+		it("the self link path should match the path to the set", function() {
+			expect(this.firstSetResult.findLink("self").path).toBeTruthy();
+			expect(this.firstSetResult.findLink("self").path).toEqual(this.sets.links[0].path);
+		});
+
 		describe("and I follow the self link", function() {
 
 			before(function(done) {
@@ -82,6 +87,10 @@ describe("Given config and repo", function() {
 				var actual = this.createResult.repr.data;
 				var expected = this.createThing;
 				expect(actual).toMatch(expected);
+			});
+
+			it("the resource's self link's path should be setId/itemId", function() {
+				expect(this.createResult.findLink("self").path).toEqual(this.createResult.repr.name);
 			});
 
 			describe("and when I follow the set link's self link", function() {

@@ -13,7 +13,9 @@ describe("Given versioned config and repo", function() {
 
 	function buildMySetGetLinks() {
 		var ret = {};
-		for(var i = 0; i < this.sets.links.length; i++) ret[this.sets.links[i].path] = this.sets.links[i];
+		for(var i = 0; i < this.sets.links.length; i++) {
+			ret[this.sets.links[i].rel] = this.sets.links[i];
+		}
 		return ret;
 	}
 
@@ -29,7 +31,7 @@ describe("Given versioned config and repo", function() {
 		});
 
 		it("all sets should still have a create link", function() {
-			expect(this.savedResult.repr.findLink("create").path).toBeDefined();
+			expect(this.savedResult.repr.findLink("create")).toBeDefined();
 		});
 
 	});
@@ -41,8 +43,8 @@ describe("Given versioned config and repo", function() {
 			this.item = { "place" : "bo" };
 			var context = this;
 			this.setGetLinks["saved"].follow(function(err, result) {
-				result.repr.findLink("create").follow(context.item, function(err, result) {
-					result.repr.findLink("self").follow(function(err, result) {
+				result.findLink("create").follow(context.item, function(err, result) {
+					result.findLink("self").follow(function(err, result) {
 						context.v1result = result;
 						done();
 					});
@@ -55,7 +57,13 @@ describe("Given versioned config and repo", function() {
 		});
 		
 		it("it should have an add-version link", function() {
-			expect(this.v1result.repr.findLink("add-version").rel).toEqual("add-version");
+			expect(this.v1result.findLink("add-version").rel).toEqual("add-version");
+		});
+
+		it("the add-version link should have a path of setId/itemId/versions", function() {
+			var actual = this.v1result.findLink("add-version").path;
+			var expected = this.v1result.repr.name + "/versions";
+			expect(actual).toEqual(expected);
 		});
 
 		describe("and when add-version is followed", function() {
@@ -73,10 +81,8 @@ describe("Given versioned config and repo", function() {
 
 			it("it should link to v1 as previous-version", function() {
 				var prevLink = this.v2result.findLink("previous-version");
-				expect(prevLink.path).toBeDefined();
-
 				var v1Link = this.v1result.findLink("self");
-				expect(prevLink.path).toEqual(v1Link.path);
+				expect(prevLink.buildTargetKey()).toEqual(v1Link.buildTargetKey());
 			});
 
 			describe("and when previous-version is followed, then next-version is followed", function() {
@@ -94,9 +100,7 @@ describe("Given versioned config and repo", function() {
 				});
 
 				it("it should return v2", function() {
-					expect(this.v2result.findLink("self").rel).not.toEqual("nothing");
-					expect(this.finalResult.findLink("self").path).toBeDefined();
-					expect(this.finalResult.findLink("self").path).toEqual(this.v2result.findLink("self").path);
+					expect(this.finalResult.repr.data).toEqual(this.v2result.repr.data);
 				});
 			});
 

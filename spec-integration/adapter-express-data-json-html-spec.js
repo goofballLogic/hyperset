@@ -2,13 +2,12 @@ var utils = require("../spec/utils/utils"),
 	buster = require("buster"),
 	hyperset = require("../lib/hyperset"),
 	expressadapter = require("../lib/adapter-express"),
-	express = require("express"),
 	expressContext = require("./scenarios/express-context")
 	;
 
 buster.spec.expose();
 
-var rsc = runSaveAndComplete;
+var rsc = utils.runSaveAndComplete;
 
 describe("Given app, adapter and simple sets config", function() {
 
@@ -16,7 +15,9 @@ describe("Given app, adapter and simple sets config", function() {
 		utils.GivenRepoAndConfig.call(this, "simple");
 		this.app = new expressContext.App(3456);
 		this.rootUrl = "/rootUrl";
-		this.adapter = new expressadapter.Adapter(this.sets, { "root" : this.rootUrl });
+		var expressConfig = this.config.express || {};
+		expressConfig.root = this.rootUrl;
+		this.adapter = new expressadapter.Adapter(this.sets, expressConfig);
 		this.adapter.install(this.app);
 	});
 
@@ -40,19 +41,19 @@ describe("Given app, adapter and simple sets config", function() {
 		});
 
 		it("it should contain a self link to /rootUrl/forms", function() {
-			var link = findLinkByRel(this.json.links, "self");
+			var link = utils.findLinkByRel(this.json.links, "self");
 			expect(link.href).toEqual("/rootUrl/forms");
 		});
 
 		it("it should contain a create link to /rootUrl/forms", function() {
-			var link = findLinkByRel(this.json.links, "create");
+			var link = utils.findLinkByRel(this.json.links, "create");
 			expect(link.href).toEqual("/rootUrl/forms");
 		});
 
 		describe("and create link is followed", function() {
 
 			before(function(done) {
-				var createLink = findLinkByRel(this.json.links, "create");
+				var createLink = utils.findLinkByRel(this.json.links, "create");
 				rsc(this, "postFormsResult", done, this.app.trigger, "POST", createLink.href, "application/json", "fish", "text/plain");
 			});
 
@@ -67,7 +68,7 @@ describe("Given app, adapter and simple sets config", function() {
 			describe("and update link is followed", function() {
 
 				before(function(done) {
-					var updateLink = findLinkByRel(this.json.links, "update");
+					var updateLink = utils.findLinkByRel(this.json.links, "update");
 					rsc(this, "updateFormsResult", done, this.app.trigger, "PUT", updateLink.href, "application/json", "fish and chips", "text/plain");
 				});
 
@@ -78,7 +79,7 @@ describe("Given app, adapter and simple sets config", function() {
 				describe("and when self link is followed", function() {
 				
 					before(function(done) {
-						var selfLink = findLinkByRel(this.json.links, "self");
+						var selfLink = utils.findLinkByRel(this.json.links, "self");
 						rsc(this, "updateFormsSelfResult", done, this.app.trigger, "GET", selfLink.href, "application/json");
 					});
 
@@ -89,7 +90,7 @@ describe("Given app, adapter and simple sets config", function() {
 					describe("and when delete link is followed", function() {
 
 						before(function(done) {
-							var deleteLink = findLinkByRel(this.json.links, "delete");
+							var deleteLink = utils.findLinkByRel(this.json.links, "delete");
 							rsc(this, "deleteFormsResult", done, this.app.trigger, "DELETE", deleteLink.href, "application/json");
 						});
 
@@ -104,8 +105,8 @@ describe("Given app, adapter and simple sets config", function() {
 						describe("and when self link is followed", function() {
 
 							before(function(done) {
-								var selfLink = findLinkByRel(this.json.links, "self");
-								rsc(this, "deleteFormsSelfResult", done, this.app.trigger, "GET", selfLink.href, "application/json");	
+								var selfLink = utils.findLinkByRel(this.json.links, "self");
+								rsc(this, "deleteFormsSelfResult", done, this.app.trigger, "GET", selfLink.href, "application/json");
 							});
 
 							it("it should return 404 Not found", function() {
@@ -169,7 +170,7 @@ describe("Given app, adapter and simple sets config", function() {
 
 				before(function(done) {
 					var updateLink = /<form action="([^"]*)"(?:[\s\S]*?)method="POST"(?:[\s\S]*?)<h.>Update item(?:[\s\S]*?)<\/form>/g.exec(this.getItemResult[1])[1];
-					rsc(this, "updateItemResult", done, this.app.trigger, "POST", updateLink, "application/json", 
+					rsc(this, "updateItemResult", done, this.app.trigger, "POST", updateLink, "application/json",
 						"_method=put&data=hello+dolphins&Submit=Submit", "application/x-www-form-urlencoded");
 				});
 
@@ -206,27 +207,8 @@ describe("Given app, adapter and simple sets config", function() {
 
 			});
 
-		});	
+		});
 
 	});
 
 });
-
-function findLinkByRel(links, rel) { 
-	for(var i = 0; i < links.length; i++) 
-		if(links[i].rel==rel) return links[i];
-	return null; 
-}
-
-function runSaveAndComplete(context, name, done, fn, arg1, argN) {
-	var fnArgs = [];
-	for(var i = 4; i < arguments.length; i++) { fnArgs.push(arguments[i]); }
-	fnArgs.push(function() {
-		context[name] = arguments;
-		context.data = arguments[1]; 
-		delete context.json;
-		try { context.json = JSON.parse(context.data); } catch(e){ }
-		done();
-	});
-	fn.apply(context, fnArgs);
-}
