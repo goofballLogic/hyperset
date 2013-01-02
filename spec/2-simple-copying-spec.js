@@ -4,129 +4,98 @@ var utils = require("./utils/utils"),
 
 buster.spec.expose();
 
-describe("Given copying config and repo", function() {
+describe("Given copying config, repo, and created item", function() {
 
-	before(function() {
+	before(function(done) {
 		require("./utils/test-repo").flush();
 		utils.GivenRepoAndConfig.call(this, "simple-copying");
+		var context = this;
+		this.data = "Property ABC";
+		this.setGetLinks.forms.follow(function(err, result) {
+			result.findLink("create").follow(context.data, function(err, result) {
+				context.propertyABCLink = result.findLink("self");
+				done();
+			});
+		});
 	});
 
-	describe("When I create a form", function() {
+	describe("When I get the item", function() {
 
 		before(function(done) {
 			var context = this;
-			this.setGetLinks["forms"].follow(function(err, result) {
-				var createFormLink = result.repr.findLink("create");
-				context.form = { "yo" : "momma" };
-				createFormLink.follow(context.form, function(err, result) {
-					context.createResult = result;
-					done();
-				});
-			});
+			this.propertyABCLink.follow(function(err, result) { context.getResult = result; done(); });
 		});
 
-		it("it should contain a link to the copying state", function() {
-			var actual = this.createResult.repr.findLink("copy-to-publishedForms").path;
-			var expected = this.createResult.repr.findLink("self").path + "/copying-to-publishedForms";
-			expect(actual).toEqual(expected);
+		it("it should contain a copy transition", function() {
+			expect(this.getResult.findLinks("copy-to-publishedForms").length).toEqual(1);
 		});
 
-		describe("and when I follow the copy link", function() {
+		describe("and when the copy transition is followed", function() {
 
 			before(function(done) {
 				var context = this;
-				this.createResult.repr.findLink("copy-to-publishedForms").follow(function(err, result) {
-					context.copyingResult = result;
-					done();
-				});
+				this.getResult.findLink("copy-to-publishedForms").follow(function(err, result) { context.getCopyResult = result; done(); });
 			});
 
-			it("it should contain a link to complete the copy", function() {
-				var actual = this.copyingResult.repr.findLink("create");
-				expect(actual).toBeDefined();
+			it("it should contain a link to execute the transition", function() {
+				var link = this.getCopyResult.findLink("execute-copy");
+				expect(link.rel).toEqual("execute-copy");
 			});
 
-			describe("and when I follow the create link", function() {
+			describe("and when the execute-copy link is followed", function() {
 
 				before(function(done) {
 					var context = this;
-					this.copyingResult.repr.findLink("create").follow(this.copyingResult.repr.data, function(err, result) {
-						context.createResult = result;
-						done();
-					});
+					this.getCopyResult.findLink("execute-copy").follow(
+						this.getCopyResult.repr.data.command,
+						function(err, result) { context.executeCopyResult = result; done(); }
+					);
 				});
 
-				it("it should return a CREATED result", function() {
-					expect(this.createResult.status).toEqual(201);
+				it("it should have the same data as the original", function() {
+					expect(this.executeCopyResult.repr.data).toMatch(this.data);
 				});
 
-				it("it should return a link to the further copying state", function() {
-					var actual = this.createResult.repr.findLink("copy-to-filledForms").path;
-					var expected = this.createResult.repr.findLink("self").path + "/copying-to-filledForms";
-					expect(actual).toEqual(expected);
+				it("it should have a set link to its new set", function() {
+					var setLink = this.executeCopyResult.findLink("set");
+					expect(setLink.path).toEqual(this.setGetLinks.publishedForms.path);
 				});
 
-				describe("and when I follow the set link", function() {
+				describe("and when the old set is retrieved", function() {
 
 					before(function(done) {
 						var context = this;
-						this.createResult.repr.findLink("set").follow(function(err, result) {
-							context.setResult = result;
+						this.setGetLinks.forms.follow(function(err, result) {
+							context.formsSetResult = result;
 							done();
 						});
 					});
 
-					it("it should return a set linking to the created item", function() {
-						var createSelfLinkPath = this.createResult.repr.findLink("self").path;
-						var itemLink = this.setResult.repr.findLink("item", createSelfLinkPath);
-						expect(itemLink.path).toEqual(createSelfLinkPath);
+					it("it should still have a link to the item which was copied", function() {
+						expect(this.formsSetResult.findLinks("item", this.propertyABCLink.path).length).toEqual(1);
 					});
 
 				});
 
-				describe("and when I follow the link to the further copying state", function() {
+			});
 
-					before(function(done) {
-						var context = this;
-						this.createResult.repr.findLink("copy-to-filledForms").follow(function(err, result) { context.nextCopyResult = result; done(); });
-					});
+			describe("and when the item is modified before following the execute-copy link", function() {
 
-					it("it should have a create link", function() {
-						expect(this.nextCopyResult.findLink("create").path).toBeTruthy();
-					});
+				before(function(done) {
+					var context = this;
+					var executeLink = this.getCopyResult.findLink("execute-copy");
+					var executeCommand = this.getCopyResult.repr.data.command;
 
-					describe("and when I follow the create link", function() {
-
-						before(function(done) {
-							var context = this;
-							var data = this.nextCopyResult.repr.data;
-							this.nextCopyResult.findLink("create").follow(data, function(err, result) { context.createResult = result; done(); });
+					this.getResult.findLink("update").follow(this.getResult.repr.data + " (special offer)", function(err, result) {
+						executeLink.follow(executeCommand, function(err, result) {
+							context.executeStaleCommandResult = result;
+							done();
 						});
-
-						it("it should respond with 201 CREATED", function() {
-							expect(this.createResult.status).toEqual(201);
-						});
-
-						describe("and when I query the filled-forms set", function() {
-
-							before(function(done) {
-								var context = this;
-								this.setGetLinks["filledForms"].follow(function(err, result) {
-									context.filledFormsResult = result;
-									done();
-								});
-							});
-
-							it("it should contain a link to the copied item", function() {
-								var createdItemPath = this.createResult.findLink("self").path;
-								var linkToCopiedItem = this.filledFormsResult.repr.findLink("item", createdItemPath);
-								expect(linkToCopiedItem.path).toEqual(createdItemPath);
-							});
-
-						});
-
 					});
+				});
 
+				it("it should respond with 409 CONFLICT", function() {
+					expect(this.executeStaleCommandResult.status).toEqual(409);
 				});
 
 			});

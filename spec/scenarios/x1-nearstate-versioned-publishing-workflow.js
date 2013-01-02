@@ -67,7 +67,10 @@ module.exports = {
 				types: [ "update" ]
 			}]
 		}
-	]/*,
+	],
+	modules: [{
+		name: "../spec/scenarios/x1-nearstate-versioned-publishing-workflow-module"
+	}]/*,
 	"express": {
 		methods : {
 			"copy-to-publishedForms" : "get",

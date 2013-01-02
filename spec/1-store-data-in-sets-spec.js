@@ -61,9 +61,7 @@ describe("Given config and repo", function() {
 			});
 
 			it("it should return the same repr", function() {
-				var actual = utils.toJSON(this.selfResult.repr);
-				var expected = utils.toJSON(this.firstSetResult.repr);
-				expect(actual).toMatch(expected);
+				expect(JSON.stringify(this.selfResult.repr)).toMatch(JSON.stringify(this.firstSetResult.repr));
 			});
 
 		});
@@ -133,9 +131,7 @@ describe("Given config and repo", function() {
 				});
 
 				it("it should return the same repr", function() {
-					var actual = utils.toJSON(this.selfResult.repr);
-					var expected = utils.toJSON(this.createResult.repr);
-					expect(actual).toMatch(expected);
+					expect(JSON.stringify(this.selfResult.repr)).toMatch(JSON.stringify(this.createResult.repr));
 				});
 
 			});
@@ -199,7 +195,7 @@ describe("Given config and repo", function() {
 				it("it should return a repr of the deleted resource", function() {
 					var expected = utils.toJSON(this.createResult.repr);
 					var actual = this.deleteResult.repr;
-					expect(actual).toMatch(expected);
+					expect(JSON.stringify(this.createResult.repr)).toMatch(JSON.stringify(this.deleteResult.repr));
 				});
 
 				describe("and I follow the self link on the previous repr of the deleted resource", function() {

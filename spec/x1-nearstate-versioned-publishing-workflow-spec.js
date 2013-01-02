@@ -4,7 +4,7 @@ var utils = require("./utils/utils"),
 
 buster.spec.expose();
 
-/*describe("Given NearState's versioned-publishing-workflow", function() {
+describe("Given NearState's versioned-publishing-workflow", function() {
 
 	before(function() {
 		require("./utils/test-repo").flush();
@@ -95,4 +95,4 @@ buster.spec.expose();
 
 	});
 
-});*/
+});
