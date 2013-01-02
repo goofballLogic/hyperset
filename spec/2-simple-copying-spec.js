@@ -15,10 +15,6 @@ describe("Given copying config and repo", function() {
 
 		before(function(done) {
 			var context = this;
-			context.setGetLinks = {};
-			for(var i = 0; i < this.sets.links.length; i++) {
-				context.setGetLinks[this.sets.links[i].rel] = this.sets.links[i];
-			}
 			this.setGetLinks["forms"].follow(function(err, result) {
 				var createFormLink = result.repr.findLink("create");
 				context.form = { "yo" : "momma" };
@@ -54,7 +50,7 @@ describe("Given copying config and repo", function() {
 
 				before(function(done) {
 					var context = this;
-					this.copyingResult.repr.findLink("create").follow(this.copyingResult.repr, function(err, result) {
+					this.copyingResult.repr.findLink("create").follow(this.copyingResult.repr.data, function(err, result) {
 						context.createResult = result;
 						done();
 					});
@@ -92,31 +88,51 @@ describe("Given copying config and repo", function() {
 
 					before(function(done) {
 						var context = this;
-						this.createResult.repr.findLink("copy-to-filledForms").follow(function(err, result) {
-							context.nextCopyResult = result;
-							done();
-						});
+						this.createResult.repr.findLink("copy-to-filledForms").follow(function(err, result) { context.nextCopyResult = result; done(); });
 					});
 
-					describe("and when I query the filled-forms set", function() {
+					it("it should have a create link", function() {
+						expect(this.nextCopyResult.findLink("create").path).toBeTruthy();
+					});
+
+					describe("and when I follow the create link", function() {
 
 						before(function(done) {
 							var context = this;
-							this.setGetLinks["filledForms"].follow(function(err, result) {
-								context.filledFormsResult = result;
-								done();
-							});
+							var data = this.nextCopyResult.repr.data;
+							this.nextCopyResult.findLink("create").follow(data, function(err, result) { context.createResult = result; done(); });
 						});
 
-						it("it should contain a link to the copied item", function() {
-							var createdItemPath = this.nextCopyResult.repr.path;
-							var linkToCopiedItem = this.filledFormsResult.repr.findLink("item", createdItemPath);
-							expect(linkToCopiedItem.path).toEqual(createdItemPath);
+						it("it should respond with 201 CREATED", function() {
+							expect(this.createResult.status).toEqual(201);
+						});
+
+						describe("and when I query the filled-forms set", function() {
+
+							before(function(done) {
+								var context = this;
+								this.setGetLinks["filledForms"].follow(function(err, result) {
+									context.filledFormsResult = result;
+									done();
+								});
+							});
+
+							it("it should contain a link to the copied item", function() {
+								var createdItemPath = this.createResult.findLink("self").path;
+								var linkToCopiedItem = this.filledFormsResult.repr.findLink("item", createdItemPath);
+								expect(linkToCopiedItem.path).toEqual(createdItemPath);
+							});
+
 						});
 
 					});
+
 				});
+
 			});
+
 		});
+
 	});
+
 });

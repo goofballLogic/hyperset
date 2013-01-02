@@ -22,7 +22,7 @@ describe("Given config and repo", function() {
 			});
 		});
 
-		it("it should return a 404 status", function() {
+		it("it should return a 404 NOT FOUND status", function() {
 			expect(this.result.status).toEqual(404);
 		});
 
@@ -56,7 +56,7 @@ describe("Given config and repo", function() {
 				});
 			});
 
-			it("it should return an OK result", function() {
+			it("it should return a 200 OK result", function() {
 				expect(this.selfResult.status).toEqual(200);
 			});
 
@@ -79,7 +79,7 @@ describe("Given config and repo", function() {
 				});
 			});
 
-			it("it should return a Created result", function() {
+			it("it should return a 201 CREATED result", function() {
 				expect(this.createResult.status).toEqual(201);
 			});
 
@@ -105,7 +105,7 @@ describe("Given config and repo", function() {
 					});
 				});
 
-				it("it should return an OK result", function() {
+				it("it should return a 200 OK result", function() {
 					expect(this.setResult.status).toEqual(200);
 				});
 
@@ -128,7 +128,7 @@ describe("Given config and repo", function() {
 					});
 				});
 
-				it("it should return an OK result", function() {
+				it("it should return a 200 OK result", function() {
 					expect(this.selfResult.status).toEqual(200);
 				});
 
@@ -151,7 +151,7 @@ describe("Given config and repo", function() {
 					});
 				});
 
-				it("it should return an OK result", function() {
+				it("it should return a 200 OK result", function() {
 					expect(this.updateResult.status).toEqual(200);
 				});
 
@@ -170,7 +170,7 @@ describe("Given config and repo", function() {
 						});
 					});
 
-					it("it should return an OK result", function() {
+					it("it should return a 200 OK result", function() {
 						expect(this.selfResult.status).toEqual(200);
 					});
 
@@ -192,7 +192,7 @@ describe("Given config and repo", function() {
 					});
 				});
 
-				it("it should return an OK result", function() {
+				it("it should return a 200 OK result", function() {
 					expect(this.deleteResult.status).toEqual(200);
 				});
 
@@ -212,7 +212,7 @@ describe("Given config and repo", function() {
 						});
 					});
 			
-					it("it should return a NotFound result", function() {
+					it("it should return a 404 NOTFOUND result", function() {
 						expect(this.selfResult.status).toEqual(404);
 					});
 

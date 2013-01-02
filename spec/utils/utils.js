@@ -6,6 +6,8 @@ module.exports.GivenRepoAndConfig = function(scenario, repo) {
 	this.config = require("../scenarios/" + scenario);
 	this.repo = repo || require("./test-repo");
 	this.sets = new Sets(this.config, { "repo" : this.repo });
+	this.setGetLinks = {};
+	for(var i = 0; i < this.sets.links.length; i++) this.setGetLinks[this.sets.links[i].rel] = this.sets.links[i];
 };
 
 module.exports.FakeApp = function() {
@@ -53,6 +55,12 @@ module.exports.findLinkByRel = function(links, rel) {
 	return null;
 };
 
+module.exports.findLinkByRelAndPath = function(links, rel, path) {
+	for(var i = 0; i < links.length; i++)
+		if(links[i].rel == rel && links[i].path==path) return links[i];
+	return null;
+};
+
 module.exports.runSaveAndComplete = function(context, name, done, fn, arg1, argN) {
 	var fnArgs = [];
 	for(var i = 4; i < arguments.length; i++) { fnArgs.push(arguments[i]); }
@@ -65,3 +73,13 @@ module.exports.runSaveAndComplete = function(context, name, done, fn, arg1, argN
 	});
 	fn.apply(context, fnArgs);
 };
+
+module.exports.repeat = function(times, command, callback, count) {
+	if(!count) count = 0;
+	if(count < times) {
+		var again = function() { module.exports.repeat(times, command, callback, count + 1); };
+		command(again);
+	} else {
+		callback();
+	}
+}

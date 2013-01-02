@@ -7,6 +7,7 @@ module.exports = {
 	// store and item in a set
 	store: function(setName, itemId, item, callback) {
 		if(this.debug) console.log("store", arguments);
+		if(typeof item == "function") console.log(arguments);
 		this.sets[setName] = this.sets[setName] || {};
 		this.sets[setName][itemId] = JSON.parse(JSON.stringify(item));
 		callback(null, this.sets[setName][itemId]);
@@ -79,6 +80,12 @@ module.exports = {
 		var toRemove = set[itemId];
 		delete set[itemId];
 		callback(null, toRemove);
+	},
+	// delete a set
+	removeSet: function(setName, callback) {
+		if(this.debug) console.log("removeSet", arguments);
+		if(this.sets[setName]) delete this.sets[setName];
+		callback(null);
 	},
 	// index the items in a set
 	index: function(setName, callback) {

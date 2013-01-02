@@ -4,6 +4,32 @@ var utils = require("./utils/utils"),
 
 buster.spec.expose();
 
+
+/*
+	From a versioned-set one can:
+		- get a versioned item - T
+		- create a versioned item - T
+	From a versioned-item one can:
+		- see the data of the latest version - T
+		- get the item's version item - T
+		- get the previous-version item (if any) - T
+		- delete the versioned-item (all versions) - T
+		- add a version - T
+		- get the versions - T
+		- NOT update - T
+	From the versions
+		- get a version - T
+		- get the latest version - T
+		- NOT create a version - T
+	From a versioned-item
+		- see the data of the latest version - T
+		- get the previous version (if any) - T
+		- get the next version (if any) - T
+		- delete this version - T
+		- get the versions - T
+		- NOT update - T
+*/
+
 describe("Given versioned config and repo", function() {
 
 	before(function() {
@@ -11,18 +37,9 @@ describe("Given versioned config and repo", function() {
 		utils.GivenRepoAndConfig.call(this, "simple-versioned");
 	});
 
-	function buildMySetGetLinks() {
-		var ret = {};
-		for(var i = 0; i < this.sets.links.length; i++) {
-			ret[this.sets.links[i].rel] = this.sets.links[i];
-		}
-		return ret;
-	}
-
 	describe("When initialised", function() {
 		// regression checks
 		before(function(done) {
-			this.setGetLinks = buildMySetGetLinks.call(this);
 			var context = this;
 			this.savedSetResult = this.setGetLinks["saved"].follow(function(err, result) {
 				context.savedResult = result;
@@ -39,11 +56,10 @@ describe("Given versioned config and repo", function() {
 	describe("When new item added to versioned set and self link is followed", function() {
 
 		before(function(done) {
-			this.setGetLinks = buildMySetGetLinks.call(this);
-			this.item = { "place" : "bo" };
+			this.v1data = { "place" : "bo" };
 			var context = this;
 			this.setGetLinks["saved"].follow(function(err, result) {
-				result.findLink("create").follow(context.item, function(err, result) {
+				result.findLink("create").follow(context.v1data, function(err, result) {
 					result.findLink("self").follow(function(err, result) {
 						context.v1result = result;
 						done();
@@ -52,94 +68,229 @@ describe("Given versioned config and repo", function() {
 			});
 		});
 
+		it("it's set should have an item link", function(done) {
+			var expectedPath = this.v1result.repr.name;
+			this.setGetLinks["saved"].follow(function(err, result) {
+				expect(result.findLink("item").path).toEqual(expectedPath);
+				done();
+			});
+		});
+
+		it("it should contain the data of the item", function() {
+			expect(this.v1result.repr.data).toMatch(this.v1data);
+		});
+		
 		it("it should not have an update link", function() {
-			expect(this.v1result.findLink("update").rel).toEqual("nothing");
+			expect(this.v1result.findLinks("update").length).toEqual(0);
 		});
 		
 		it("it should have an add-version link", function() {
-			expect(this.v1result.findLink("add-version").rel).toEqual("add-version");
+			expect(this.v1result.findLinks("add-version").length).toEqual(1);
 		});
 
-		it("the add-version link should have a path of setId/itemId/versions", function() {
-			var actual = this.v1result.findLink("add-version").path;
-			var expected = this.v1result.repr.name + "/versions";
-			expect(actual).toEqual(expected);
+		it("it should have a delete link", function() {
+			expect(this.v1result.findLinks("delete").length).toEqual(1);
 		});
 
-		describe("and when add-version is followed", function() {
+		it("it should have a versions link", function() {
+			expect(this.v1result.findLinks("versions").length).toEqual(1);
+		});
+
+		it("it should have a version link", function() {
+			expect(this.v1result.findLinks("version").length).toEqual(1);
+		});
+
+		it("it shouldn't have a previous-version link", function() {
+			expect(this.v1result.findLinks("previous-version").length).toEqual(0);
+		});
+
+		describe("and the add-version link is followed", function() {
 
 			before(function(done) {
 				var context = this;
-				this.v2 = { "place" : "bum" };
-				this.v1result.findLink("add-version").follow(this.v2, function(err, result) {
-					result.findLink("self").follow(function(err, result) {
-						context.v2result = result;
-						done();
-					});
+				this.v2data = { "place" : "peep" };
+				this.v1result.findLink("add-version").follow(this.v2data, function(err, result) { context.v2result = result; done(); });
+			});
+
+			it("it should have returned 201 CREATED", function() {
+				expect(this.v2result.status).toEqual(201);
+			});
+
+			it("its set link should link to the versioned set", function() {
+				expect(this.v2result.findLink("set").path).toEqual(this.setGetLinks["saved"].path);
+			});
+
+			it("it should have a versions link to the versions set with two item-versions in it", function(done) {
+				this.v2result.findLink("versions").follow(function(err, result) {
+					expect(result.findLinks("item-version").length).toEqual(2);
+					done();
 				});
 			});
 
-			it("it should link to v1 as previous-version", function() {
-				var prevLink = this.v2result.findLink("previous-version");
-				var v1Link = this.v1result.findLink("self");
-				expect(prevLink.buildTargetKey()).toEqual(v1Link.buildTargetKey());
+			it("it should have a delete link", function() {
+				expect(this.v2result.findLinks("delete").length).toEqual(1);
 			});
 
-			describe("and when previous-version is followed, then next-version is followed", function() {
+			it("it should have an add-version link", function() {
+				expect(this.v2result.findLinks("add-version").length).toEqual(1);
+			});
+
+			it("it should have a previous-version link to v1's version", function(done) {
+				var expected = this.v1data;
+				this.v2result.findLink("previous-version").follow(function(err, result) {
+					expect(result.repr.data).toMatch(expected);
+					done();
+				});
+			});
+
+			it("v1 should have a next-version link to v2", function(done) {
+				var expected = this.v2result.findLink("version").path;
+				this.v1result.findLink("version").follow(function(err, result) {
+					expect(result.findLink("next-version").path).toEqual(expected);
+					done();
+				});
+			});
+
+			describe("and the add-version link is followed again", function() {
 
 				before(function(done) {
 					var context = this;
+					this.v3data = { "place" : "little" };
+					this.v2result.findLink("add-version").follow(this.v3data, function(err, result) { context.v3result = result; done(); });
+				});
 
-					this.v2result.findLink("previous-version").follow(function(err, result) {
-						result.findLink("next-version").follow(function(err, result) {
-							context.finalResult = result;
+				describe("and the previous version of the item is deleted", function() {
+
+					before(function(done) {
+						var context = this;
+						this.v3result.findLink("previous-version").follow(function(err, result) {
+							result.findLink("delete").follow(function(err, result) { done(); });
+						});
+					});
+
+					it("v3 should now have a previous-version link to v1", function(done) {
+						var expected = this.v1result.findLink("version").path;
+						this.v3result.findLink("version").follow(function(err, result) {
+							expect(result.findLink("previous-version").path).toEqual(expected);
 							done();
 						});
 					});
-				
-				});
 
-				it("it should return v2", function() {
-					expect(this.finalResult.repr.data).toEqual(this.v2result.repr.data);
-				});
-			});
-
-			describe("and when add-version is followed again, v2 is deleted, and v3 && v1 are requeried", function() {
-
-				before(function(done) {
-					var context = this;
-					// add v3
-					this.v2result.findLink("add-version").follow({ "yo" : "momma" }, function(err, result) {
-						context.v3result = result;
-						// delete v2
-						context.v2result.findLink("delete").follow(function(err, result) {
-							// reload v3
-							context.v3result.findLink("self").follow(function(err, result) {
-								context.v3result2 = result;
-								// reload v1
-								context.v1result.findLink("self").follow(function(err, result) {
-									context.v1result2 = result;
-									done();
-								});
-							});
+					it("v1 should now have a next-version link to v3", function(done) {
+						var expected = this.v3result.findLink("version").path;
+						this.v1result.findLink("version").follow(function(err, result) {
+							expect(result.findLink("next-version").path).toEqual(expected);
+							done();
 						});
 					});
-				});
 
-				it("v3 should have previous-version link to v1", function() {
-					var v3prevLink = this.v3result2.findLink("previous-version");
-					var v1selfLink = this.v1result2.findLink("self");
-					expect(v3prevLink.path).toEqual(v1selfLink.path);
-				});
-
-				it("v1 should have next-version link to v3", function() {
-					var v1nextLink = this.v1result2.findLink("next-version");
-					var v3selfLink = this.v3result2.findLink("self");
-					expect(v1nextLink.path).toEqual(v3selfLink.path);
 				});
 
 			});
 
+		});
+
+		describe("and delete link is followed", function() {
+
+			before(function(done) {
+				var context = this;
+				this.v1result.findLink("delete").follow(function(err, result) {
+					context.deleteResult = result;
+					done();
+				});
+			});
+
+			it("it should have returned 200 OK", function() {
+				expect(this.deleteResult.status).toEqual(200);
+			});
+
+			it("it's set should no longer have the link", function(done) {
+				this.setGetLinks["saved"].follow(function(err, result) {
+					expect(result.findLink("item").path).toBeFalsy();
+					done();
+				});
+			});
+
+			it("the versions set should no longer contain any items", function(done) {
+				this.v1result.findLink("versions").follow(function(err, result) {
+					expect(result.findLinks("item-version").length).toEqual(0);
+					done();
+				});
+			});
+
+		});
+
+		describe("and the versions link is followed", function() {
+
+			before(function(done) {
+				var context = this;
+				this.v1result.findLink("versions").follow(function(err, result) { context.versionsResult = result; done(); });
+			});
+
+			it("it should have one item-version", function() {
+				expect(this.versionsResult.findLinks("item-version").length).toEqual(1);
+			});
+
+			it("it should have one latest version with the correct data", function(done) {
+				var expected = this.v1data;
+				expect(this.versionsResult.findLinks("latest-version").length).toEqual(1);
+				this.versionsResult.findLink("latest-version").follow(function(err, result) {
+					expect(result.repr.data).toMatch(expected);
+					done();
+				});
+			});
+
+			it("it should not have a create link", function() {
+				expect(this.versionsResult.findLinks("create").length).toEqual(0);
+			});
+		});
+
+		describe("and the version link is followed", function() {
+
+			before(function(done) {
+				var context = this;
+				this.v1result.findLink("version").follow(function(err, result) { context.versionResult = result; done(); });
+			});
+
+			it("it should have the correct data", function() {
+				expect(this.versionResult.repr.data).toMatch(this.v1data);
+			});
+
+			it("it should have a versions link to the item versions set", function() {
+				expect(this.versionResult.findLink("versions").path).toEqual(this.v1result.findLink("versions").path);
+			});
+
+			it("it should not have an update link", function() {
+				expect(this.versionResult.findLinks("update").length).toEqual(0);
+			});
+		});
+
+		describe("and the add-version link is followed repeatedly 10 times", function() {
+
+			before(function(done) {
+				var context = this;
+				var currentResult = this.v1result;
+				var count = 0;
+				utils.repeat(10, function(next) {
+					count++;
+					currentResult.findLink("add-version").follow(count, function(err, result) { currentResult = result; next(); });
+				}, function() {
+					context.lastResult = currentResult;
+					done();
+				});
+			});
+
+			it("if should have the versions in the correct order", function(done) {
+				var currentResult = this.lastResult;
+				var actual = [];
+				utils.repeat(10, function(next) {
+					actual.push(currentResult.repr.data);
+					currentResult.repr.findLink("previous-version").follow(function(err, result) { currentResult = result; next(); });
+				}, function() {
+					expect(actual).toMatch([10,9,8,7,6,5,4,3,2,1]);
+					done();
+				});
+			});
 		});
 
 	});

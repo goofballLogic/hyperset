@@ -2,13 +2,11 @@ module.exports = {
 	name: "Simplest scenario",
 	sets: [
 		{
-			name: "saved",
+			name: "immutables",
 			filters: [{
-				name: "versioning"
+				name: "prune",
+				itemTypes: [ "update", "delete" ]
 			}]
-		},
-		{
-			name: "working"
 		}
 	]
 };
