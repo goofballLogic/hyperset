@@ -1,7 +1,7 @@
 var utils = require("../spec/utils/utils"),
 	buster = require("buster"),
 	hypermedia = require("../lib/hyperset"),
-	riakrepo = require("../lib/repo-riak")
+	riakrepo = hypermedia.Riak //require("../lib/repo-riak")
 	;
 
 buster.spec.expose();
@@ -125,7 +125,7 @@ describe("Given riak-repo", function() {
 		});
 
 		describe("and two more items are stored", function() {
-			
+
 			before(function(done) {
 				var context = this;
 				this.repo.store("more-items", "item2", { "item" : 2 }, function() {

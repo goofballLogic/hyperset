@@ -6,10 +6,14 @@ module.exports = {
 
 	// store and item in a set
 	store: function(setName, itemId, item, callback) {
-		if(this.debug) console.log("store", arguments);
-		if(typeof item == "function") console.log(arguments);
-		this.sets[setName] = this.sets[setName] || {};
-		this.sets[setName][itemId] = JSON.parse(JSON.stringify(item));
+		try{
+			if(this.debug) console.log("store", arguments);
+			if(typeof item == "function") console.log(arguments);
+			this.sets[setName] = this.sets[setName] || {};
+			this.sets[setName][itemId] = JSON.parse(JSON.stringify(item));
+		} catch(e) {
+			callback(e, null);
+		}
 		callback(null, this.sets[setName][itemId]);
 	},
 	// store meta data for a set

@@ -21,4 +21,4 @@ riak-test:
 
 express-test:
 #	./node_modules/.bin/buster-test --reporter specification -g "express" --color=none
-	./node_modules/.bin/buster-test -g "express" --color=none
+	./node_modules/.bin/buster-autotest -g "express" --color=none

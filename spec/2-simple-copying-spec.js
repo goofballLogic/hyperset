@@ -6,6 +6,14 @@ buster.spec.expose();
 
 describe("Given copying config, repo, and created item", function() {
 
+
+	beforeAll(function() {
+		this.start = new Date();
+	});
+	afterAll(function() {
+		console.log(new Date() - this.start);
+	});
+
 	before(function(done) {
 		require("./utils/test-repo").flush();
 		utils.GivenRepoAndConfig.call(this, "simple-copying");

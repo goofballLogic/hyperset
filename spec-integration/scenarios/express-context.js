@@ -49,7 +49,12 @@ var http = require("http"),
 				res.on("data", function(data) { buffer += data; });
 				res.on("end", function() { callback(res, buffer, thrown); });
 			});
-			if(data) req.write(data);
+
+			try {
+				if(data) req.write(data);
+			} catch(e) {
+				console.log(e, data);
+			}
 			req.end();
 			return req;
 		};

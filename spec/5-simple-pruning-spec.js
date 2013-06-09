@@ -6,6 +6,14 @@ buster.spec.expose();
 
 describe("Given pruning config, repo, and set representation", function() {
 
+
+	beforeAll(function() {
+		this.start = new Date();
+	});
+	afterAll(function() {
+		console.log(new Date() - this.start);
+	});
+	
 	before(function(done) {
 		require("./utils/test-repo").flush();
 		utils.GivenRepoAndConfig.call(this, "simple-pruning");

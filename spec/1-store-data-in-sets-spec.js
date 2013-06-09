@@ -7,6 +7,13 @@ buster.spec.expose();
 
 describe("Given config and repo", function() {
 
+	beforeAll(function() {
+		this.start = new Date();
+	});
+	afterAll(function() {
+		console.log(new Date() - this.start);
+	});
+
 	before(function() {
 		require("./utils/test-repo").flush();
 		utils.GivenRepoAndConfig.call(this, "simple");

@@ -6,6 +6,13 @@ buster.spec.expose();
 
 describe("Given moving config, repo, and created item", function() {
 
+	beforeAll(function() {
+		this.start = new Date();
+	});
+	afterAll(function() {
+		console.log(new Date() - this.start);
+	});
+	
 	before(function(done) {
 		require("./utils/test-repo").flush();
 		utils.GivenRepoAndConfig.call(this, "simple-moving");
@@ -14,7 +21,8 @@ describe("Given moving config, repo, and created item", function() {
 		this.setGetLinks.available.follow(function(err, result) {
 			result.findLink("create").follow(context.data, function(err, result) {
 				context.propertyABCLink = result.findLink("self");
-				done();
+				var customLink = context.propertyABCLink.cloneAs("custom-ABC");
+				result.repr.createLink(customLink, done);
 			});
 		});
 	});
@@ -49,7 +57,10 @@ describe("Given moving config, repo, and created item", function() {
 					var context = this;
 					this.getMoveResult.findLink("execute-move").follow(
 						this.getMoveResult.repr.data.command,
-						function(err, result) { context.executeMoveResult = result; done(); }
+						function(err, result) {
+							expect(err).toBeNull();
+							context.executeMoveResult = result; done();
+						}
 					);
 				});
 
@@ -60,6 +71,10 @@ describe("Given moving config, repo, and created item", function() {
 				it("it should have a set link to its new set", function() {
 					var setLink = this.executeMoveResult.findLink("set");
 					expect(setLink.path).toEqual(this.setGetLinks.underOffer.path);
+				});
+
+				it("it should still have the custom link added to the original", function() {
+					expect(this.executeMoveResult.findLinks("custom-ABC").length).toEqual(1);
 				});
 
 				describe("and when the old set is retrieved", function() {
