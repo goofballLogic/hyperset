@@ -13,9 +13,11 @@
     "test": "make test"
   },
   "dependencies": {
+    "express" : "3.3.3"
   },
   "devDependencies": {
-    "buster" : "0.6.x"
+    "buster" : "0.6.12",
+    "cheerio" : "0.12.0"
   },
   "engine": "node >= 0.4.1",
   "license": "MIT"
