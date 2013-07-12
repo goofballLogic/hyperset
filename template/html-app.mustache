@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{name}} application</title>
+    </head>
+    <body>
+        <h1><a href="{{appUrl}}">{{name}}</a></h1>
+        <h2>Application</h2>
+        <h3>Collections</h3>
+        <form action="{{appUrl}}" method="POST">
+            <label for="collectionName">Name</label>
+            <input name="collectionName" />
+            <input type="submit" value="Add collection" />
+        </form>
+        <ul>
+            {{#collections}}
+            <li><a href="{{{href}}}">{{name}}</a></li>
+            {{/collections}}
+        </ul>
+    </body>
+</html>
