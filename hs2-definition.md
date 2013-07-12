@@ -2,6 +2,10 @@
 
 A name bracketed by double-dashes ```--xyz--``` indicates the location of an entity-specific value at run-time. Don't confuse this with ```{{xyz}}``` which is an actual placeholder returned to the caller by the API, as part of a URL template.
 
+## Design notes
+
+Note that items can only belong to one collection. If you need a many to many relationship, you need to define a collection of "set" items, then link the "member" items to the appropriate sets. 
+
 ## Entry point URL
 An application endpoint defines the available collections.
 
@@ -37,11 +41,12 @@ Available media types include:
 			<form action="http://store.widgets.nearstate.com" method="POST">
 				<label for="collectionName">Name</label>
 				<input name="collectionName" />
-				<input type="submit">Add collection</input>
+				<input type="submit" value="Add collection" />
 			</form>
 			<ul>
 				<li><a href="http://store.widgets.nearstate.com/--collectionPath--">--collectionName--</a>
 				<li><a href="http://store.widgets.nearstate.com/--collectionPath--">--collectionName--</a>
+				. . .
 			</ul>
 		</body>
 	</html>
@@ -85,7 +90,7 @@ Available media types include:
 
 | Type | Meaning |
 |------|---------|
-| text/html *or* application/vnd.hyperset.collection+html| HTML page <br/> - one list-item + link per item. <br />- link to the application in the &lt;h1&gt; element<br /> - self-link to collection in the &lt;h2&gt; element <br /> - one form to create a new item in the &lt;form rel="add-item" . . .&gt; tag<br /> - one form to find the form for adding/updating an item with id in the &lt;form rel="upsert-item" . . .&gt;. *NOTE* that submitting this form will result in a redirect to the edit item form (see below) |
+| text/html *or* application/vnd.hyperset.collection+html| HTML page <br/> - one list-item + link per item. <br />- link to the application in the &lt;h1&gt; element<br /> - self-link to collection in the &lt;h2&gt; element <br /> - one form to create a new item in the &lt;form id="add-item" . . .&gt; tag<br /> - one form to find the form for adding/updating an item with id in the &lt;form id="upsert-item" . . .&gt;. *NOTE* that submitting this form will result in a redirect to the edit item form (see below) |
 | application/json *or* application/vnd.hyperset.collection+json | JSON representation of the collection.|
 
 ####. . . +html
@@ -99,19 +104,20 @@ Available media types include:
 			<h1><a href="http://store.widgets.nearstate.com">Widgets</a></h1>
 			<h2><a href="http://store.widgets.nearstate.com/--collectionPath--">--collectionName--</a></h2>
 			<h3>Items</h3>
-			<form rel="upsert-item" action="http://store.widgets.nearstate.com/--upsertCollectionItemPath--" method="POST">
+			<form id="upsert-item" action="http://store.widgets.nearstate.com/--upsertCollectionItemPath--" method="POST">
 				<label for="itemId">Id</label>
 				<input name="itemId" />
-				<input type="submit">Find add/update form</input>
+				<input type="submit" value="Find add/update form" />
 			</form>
-			<form rel="add-item" action="http://store.widgets.nearstate.com/--collectionPath--" method="POST">
-				<label for="itemValue">Value</label>
-				<textarea name="itemValue"></textarea>
-				<input type="submit">Add item</input>
+			<form id="add-item" action="http://store.widgets.nearstate.com/--collectionPath--" method="POST">
+				<label for="content">Content</label>
+				<textarea name="content"></textarea>
+				<input type="submit" value="Add item" />
 			</form>
 			<ul>
 				<li><a href="http://store.widgets.nearstate.com/--itemPath--">--itemId--</a>
 				<li><a href="http://store.widgets.nearstate.com/--itemPath--">--itemId--</a>
+				. . .
 			</ul>
 		</body>
 	</html>
@@ -182,22 +188,29 @@ Available media types include:
 		<body>
 			<h1><a href="http://store.widgets.nearstate.com">Widgets</a></h1>
 			<h2><a href="http://store.widgets.nearstate.com/--collectionPath--">--collectionName--</a></h2>
-			<h3><a href="http://store.widgets.nearstate.com/--itemPath--</h3>
-			--itemContent--
+			<h3><a href="http://store.widgets.nearstate.com/--itemPath--">--itemId--</a></h3>
+			<div id="content">--itemContent--</div>
 		</body>
 	</html>
 	
 ####. . . +json
 
 	{
-		name: "--collectionName--",
+		id: "--itemId--",
 		links: [ {
 			rel: "self",
 			href: "http://store.widgets.nearstate.com/--itemPath--",
 			name: "--itemId--",
 			type: "application/vnd.hyperset.item+json",
 			verbs: [ "GET", "PUT", "DELETE" ]
-		} ],
+		}, {
+			rel: "collection",
+			href: "http://store.widgets.nearstate.com/--collectionPath--",
+			name: "--collectionName--",
+			type: "application/vnd.hyperset.collection+json",
+			verbs: [ "GET", "DELETE" ]
+		}
+		. . .],
 		content: "--itemContent--"
 	}
 
