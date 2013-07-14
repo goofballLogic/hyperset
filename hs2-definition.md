@@ -2,6 +2,8 @@
 
 A name bracketed by double-dashes ```--xyz--``` indicates the location of an entity-specific value at run-time. Don't confuse this with ```{{xyz}}``` which is an actual placeholder returned to the caller by the API, as part of a URL template.
 
+Within a code block, multiple possible attribute values are indicated using ``` --or-- ```.
+
 ## Design notes
 
 Note that items can only belong to one collection. If you need a many to many relationship, you need to define a collection of "set" items, then link the "member" items to the appropriate sets. 
@@ -173,7 +175,7 @@ Available media types include:
 
 | Type | Meaning |
 |------|---------|
-| text/html *or* application/vnd.hyperset.item+html | HTML page<br />- link to the application in the &lt;h1&gt; element<br />- link to the item's collection in the &lt;h2&gt; element<br />- self-link to item in the &lt;h3&gt; element<br />- one link to the edit item form<br />- item content |
+| text/html *or* application/vnd.hyperset.item+html | HTML page<br />- link to the application in the &lt;h1&gt; element<br />- link to the item's collection in the &lt;h2&gt; element<br />- self-link to item in the &lt;h3&gt; element<br />- item content<br />- link to the upsert-item page ("Edit") |
 | application/json *or* application/vnd.hyperset.item+json | JSON representation of the item. See *vnd.hyperset.item+json* below. |
 
 ###. . . +html
@@ -190,6 +192,7 @@ Available media types include:
 			<h2><a href="http://store.widgets.nearstate.com/--collectionPath--">--collectionName--</a></h2>
 			<h3><a href="http://store.widgets.nearstate.com/--itemPath--">--itemId--</a></h3>
 			<div id="content">--itemContent--</div>
+			<a href="http://store.widgets.nearstate.com/--upsertItemPath--">Edit</a>
 		</body>
 	</html>
 	
@@ -218,3 +221,30 @@ Available media types include:
 
 	TBD
 	
+##vnd.hyperset.item-editor . . .
+
+Available media types include:
+
+| Type | Meaning |
+|------|---------|
+| text/html *or* application/vnd.hyperset.item-editor+html | HTML page<br />- link to the application in the &lt;h1&gt; element<br />- link to the item's collection in the &lt;h2&gt; element<br />- if it already exists on the server, a link to item in the &lt;h3&gt; element<br />- form to edit the item content, the label of the textarea of which contains either "Create" or "Update" depending on whether the resource already exists on the server |
+
+###. . . +html
+
+	<!DOCTYPE html>
+	<html>
+		<head>
+			<title>Widgets --itemId-- item</title>
+		</head>
+		<body>
+			<h1><a href="http://store.widgets.nearstate.com">Widgets</a></h1>
+			<h2><a href="http://store.widgets.nearstate.com/--collectionPath--">--collectionName--</a></h2>
+			<h3><a href="http://store.widgets.nearstate.com/--itemPath--">--itemId--</a></h3>
+			<form action="http://store.widgets.nearstate.com/--upsertItemPath--" method="POST">
+				<input type="hidden" name="_method" value="PUT" />
+				<label for="itemContent">Create item --or-- Update item content</label>
+				<textarea name="itemContent" id="itemContent">--itemContent--</textarea>
+				<input type="submit" value="Create --or-- Update" />
+			</form>
+		</body>
+	</html>

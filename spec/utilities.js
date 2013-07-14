@@ -152,51 +152,105 @@ function utilitiesConfigureRepo( context ) {
 
 	var collections = { };
 
+	function findCollection( collectionName, callback ) {
+
+		var collection = collections[ collectionName ];
+		if( !collection ) return callback( new Error( "Collection does not exist") );
+		callback( null, collection );
+
+	}
+
 	context.repo = {
 
-		addCollection: function( collection ) {
-			collections[ collection.name ] = collection;
-			return this.getCollection( collection.name );
+		addCollection: function( collection, callback ) {
+
+			collections[ collection.name ] = clone( collection );
+			context.repo.getCollection( collection.name, callback );
 
 		},
 
-		addItem: function( collectionName, item ) {
+		addItem: function( collectionName, item, callback ) {
 
-			var collection = this.getCollection( collectionName );
-			collection.items = collection.items || { };
-			var newItem = { };
-			for( var k in item ) newItem[ k ] = item[ k ];
-			newItem.id = newItem.id || generateUUID();
-			collection.items[ newItem.id ] = newItem;
-			return this.getItem( collectionName, newItem.id );
+			findCollection( collectionName, function( err, collection ) {
 
-		},
+				if(err) return callback( err );
 
-		getCollections: function() {
+				collection.items = collection.items || { };
+				var newItem = { };
+				for( var k in item ) newItem[ k ] = item[ k ];
+				newItem.id = newItem.id || generateUUID();
+				collection.items[ newItem.id ] = newItem;
 
-			return Object.keys( collections ).map( function( name ) {
-
-				return collections[ name ];
+				context.repo.getItem( collectionName, newItem.id, callback );
 
 			} );
 
 		},
 
-		getCollection: function( collectionName ) {
+		getCollections: function( callback ) {
 
-			var collection = collections[ collectionName ];
-			if( !collection ) throw new Error( "Collection does not exist");
-			return collection;
+			var ret = [];
+			var collectionNames = Object.keys( collections );
+			var latch = new Latch( collectionNames.length, function() {
+
+				callback( null, ret );
+
+			} );
+			collectionNames.forEach( function( name ) {
+
+				context.repo.getCollection( name, function( err, collection ) {
+
+					if( err ) {
+						callback( err );
+						callback = new Function();
+					}
+					ret.push( collection );
+					latch.countdown();
+
+				} );
+
+			} );
 
 		},
 
-		getItem: function( collectionName, itemId ) {
+		getCollection: function( collectionName, callback ) {
 
-			var collection = this.getCollection( collectionName );
-			if( !( itemId in ( collection.items || { } ) ) )
-				throw new Error( "Item does not exist" );
+			findCollection( collectionName, function( err, collection ) {
 
-			return collection.items[ itemId ];
+				if( err ) return callback( err );
+
+				var ret = clone( collection );
+				ret.items = Object.keys( ret.items || { } ).map( function( itemId ) { return { "id" : itemId }; } );
+				callback( null, ret );
+
+			} );
+
+		},
+
+		getItem: function( collectionName, itemId, callback ) {
+
+			findCollection( collectionName, function( err, collection ) {
+
+				if( err ) return callback( err );
+				if( !( itemId in ( collection.items || { } ) ) )
+					return callback( new Error( "Item does not exist" ) );
+
+				callback( null, collection.items[ itemId ] );
+
+			} );
+
+		},
+
+		getItemOrTemplate: function( collectionName, itemId, callback ) {
+
+			findCollection( collectionName, function( err, collection ) {
+
+				if( err ) throw err;
+				var exists = itemId in ( collection.items || { } );
+				var ret = exists ? collection.items[ itemId ] : { id: itemId };
+				callback( null, ret, exists );
+
+			} );
 
 		}
 
@@ -204,17 +258,32 @@ function utilitiesConfigureRepo( context ) {
 
 }
 
-function generateUUID() {
-	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-		var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-		return v.toString(16);
-	});
+function Latch( countdown, done ) { if(countdown===0) done(); this.countdown = function() { if(--countdown === 0) done(); }; }
+
+function clone( jsonObject ) {
+
+	return JSON.parse( JSON.stringify( jsonObject ) );
+
 }
 
-function utilitiesConfigureWidgetsCollections( context ) {
+function generateUUID() {
 
-	context.repo.addCollection( { name: "collection1" } );
-	context.repo.addCollection( { name: "collection2" } );
+	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace( /[xy]/g, function( c ) {
+
+		var r = Math.random() * 16 | 0, v = c == 'x' ? r : ( r & 0x3 | 0x8);
+		return v.toString( 16 );
+
+	} );
+
+}
+
+function utilitiesConfigureWidgetsCollections( context, done ) {
+
+	context.repo.addCollection( { name: "collection1" }, function( err ) {
+
+		context.repo.addCollection( { name: "collection2" }, done );
+
+	} );
 }
 
 function utilitiesConfigureWidgets( context ) {

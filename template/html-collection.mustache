@@ -7,7 +7,7 @@
         <h1><a href="{{app.appUrl}}">{{app.name}}</a></h1>
         <h2><a href="{{url}}">{{name}}</a></h2>
         <h3>Items</h3>
-        <form id="upsert-item" action="{{url}}/upsertLocateRequests" method="POST">
+        <form id="upsert-item" action="{{upsert-item-url}}" method="POST">
             <label for="itemId">Id</label>
             <input name="itemId" />
             <input type="submit" value="Find add/update form" />
@@ -19,7 +19,7 @@
         </form>
         <ul>
             {{#items}}
-            <li><a href="{{{href}}}">{{id}}</a></li>
+            <li><a href="{{{url}}}">{{id}}</a></li>
             {{/items}}
         </ul>
     </body>
