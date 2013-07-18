@@ -16,6 +16,7 @@ function Factory( config ) {
 		"buildCollectionUrl" : buildCollectionUrl,
 		"buildItemUrl" : buildItemUrl,
 		"buildUpsertLocateRequestsUrl" : buildUpsertLocateRequestsUrl,
+		"buildDeleteRequestsUrl" : buildDeleteRequestsUrl,
 		"buildItemUpsertUrl" : buildItemUpsertUrl
 	};
 
@@ -49,6 +50,11 @@ function Factory( config ) {
 
 		return buildCollectionUrl( collectionName ) + "/upsertLocateRequests";
 
+	}
+
+	function buildDeleteRequestsUrl( collectionName ) {
+
+		return buildCollectionUrl( collectionName ) + "/deleteRequests";
 	}
 
 	function buildItemUpsertUrl( collectionName, item ) {
@@ -90,7 +96,8 @@ function Engine( config, repo, onComplete ) {
 	app.post(	config.pathname,											addCollection		);
 	app.post(	config.pathname + "/:collectionName",						addItem				);
 	app.post(	config.pathname + "/:collectionName/upsertLocateRequests",	locateUpsert		);
-
+	app.post(	config.pathname + "/:collectionName/deleteRequests",		deleteItem			);
+	app.post(	config.pathname + "/:collectionName/:itemId/item-edits",	upsertItem			);
 
 	if( onComplete ) whiskers.ensureLoaded( function() { onComplete( engine ); } );
 
@@ -132,7 +139,7 @@ function Engine( config, repo, onComplete ) {
 			model.app = { };
 			for( var k in config ) model.app[ k ] = config[ k ];
 			model.url = factory.buildCollectionUrl( model.name );
-			model["upsert-item-url"] = factory.buildUpsertLocateRequestsUrl( model.name );
+			model[ "upsert-item-url" ] = factory.buildUpsertLocateRequestsUrl( model.name );
 			model.items.forEach( function( item ) { item.url = factory.buildItemUrl( model.name, item ); } );
 			res.send( whiskers[ "html-collection" ]( model ) );
 
@@ -150,7 +157,8 @@ function Engine( config, repo, onComplete ) {
 			model.collection = { name: req.params.collectionName };
 			model.collection.url = factory.buildCollectionUrl( model.collection.name );
 			model.url = factory.buildItemUrl( model.collection.name, model );
-
+			model[ "upsert-url" ] = factory.buildItemUpsertUrl( model.collection.name, model );
+			model[ "delete-url" ] = factory.buildDeleteRequestsUrl( model.collection.name );
 			res.send( whiskers[ "html-item" ]( model ) );
 
 		} );
@@ -167,6 +175,7 @@ function Engine( config, repo, onComplete ) {
 			model.collection = { name: req.params.collectionName };
 			model.collection.url = factory.buildCollectionUrl( model.collection.name );
 			model.url = factory.buildItemUrl( model.collection.name, model );
+			model[ "upsert-url" ] = factory.buildItemUpsertUrl( model.collection.name, model );
 			model[ "form-description" ] = exists ? "Update item content" : "Create item";
 			model[ "form-submit-action" ] = exists ? "Update" : "Create";
 			res.send( whiskers[ "html-item-editor" ]( model ) );
@@ -228,6 +237,35 @@ function Engine( config, repo, onComplete ) {
 	function locateUpsert( req, res ) {
 
 		res.redirect( factory.buildItemUpsertUrl( req.params.collectionName, { id: req.body.itemId } ) );
+
+	}
+
+	function upsertItem( req, res ) {
+
+		repo.getItemOrTemplate( req.params.collectionName, req.params.itemId, function( err, model, exists ) {
+
+			if( err ) throw err;
+			model.content = req.body.content;
+			repo.upsertItem( req.params.collectionName, model, function( err ) {
+
+				if( err ) throw err;
+				renderItemEditor( req, res );
+
+			} );
+
+		} );
+
+	}
+
+	function deleteItem( req, res ) {
+
+console.log( req.body );
+		repo.deleteItem( req.params.collectionName, req.body.itemId, function( err ) {
+
+			if( err ) throw err;
+			res.redirect( factory.buildCollectionUrl( req.params.collectionName ) );
+
+		} );
 
 	}
 

@@ -5,6 +5,7 @@ var engine = require( ".." );
 var http = require( "http" );
 var url = require( "url" );
 var cheerio = require( "cheerio" );
+var fakeRepo = require( "./fake-repo" );
 
 module.exports = {
 	run: utilitiesRun,
@@ -24,19 +25,21 @@ module.exports = {
 
 function behaviourSubmitFormWithValues( context, formSelector, formValues, callback ) {
 
-	if( callback == null && typeof(formValues) == "function" ) {
+	if( typeof callback === "undefined" && typeof formValues == "function" ) {
 		callback = formValues;
 		formValues = formSelector;
 		formSelector = "form";
 	}
+
 	var form = context.res.$body.find( formSelector );
+
 	var payload = [];
 	form.find( "*[name]" ).each( function( i, field ) {
 		var $field = cheerio( field );
 		var name = $field.attr( "name" );
 		var submission = name + "=";
 		if( name in formValues ) submission += encodeURIComponent( formValues[name] );
-		else submission += encodeURIComponent( $field.val( name ) );
+		else submission += encodeURIComponent( $field.val( ) );
 		payload.push( submission );
 	} );
 
@@ -150,130 +153,7 @@ function utilitiesRun( configJSON, repo, onReady ) {
 
 function utilitiesConfigureRepo( context ) {
 
-	var collections = { };
-
-	function findCollection( collectionName, callback ) {
-
-		var collection = collections[ collectionName ];
-		if( !collection ) return callback( new Error( "Collection does not exist") );
-		callback( null, collection );
-
-	}
-
-	context.repo = {
-
-		addCollection: function( collection, callback ) {
-
-			collections[ collection.name ] = clone( collection );
-			context.repo.getCollection( collection.name, callback );
-
-		},
-
-		addItem: function( collectionName, item, callback ) {
-
-			findCollection( collectionName, function( err, collection ) {
-
-				if(err) return callback( err );
-
-				collection.items = collection.items || { };
-				var newItem = { };
-				for( var k in item ) newItem[ k ] = item[ k ];
-				newItem.id = newItem.id || generateUUID();
-				collection.items[ newItem.id ] = newItem;
-
-				context.repo.getItem( collectionName, newItem.id, callback );
-
-			} );
-
-		},
-
-		getCollections: function( callback ) {
-
-			var ret = [];
-			var collectionNames = Object.keys( collections );
-			var latch = new Latch( collectionNames.length, function() {
-
-				callback( null, ret );
-
-			} );
-			collectionNames.forEach( function( name ) {
-
-				context.repo.getCollection( name, function( err, collection ) {
-
-					if( err ) {
-						callback( err );
-						callback = new Function();
-					}
-					ret.push( collection );
-					latch.countdown();
-
-				} );
-
-			} );
-
-		},
-
-		getCollection: function( collectionName, callback ) {
-
-			findCollection( collectionName, function( err, collection ) {
-
-				if( err ) return callback( err );
-
-				var ret = clone( collection );
-				ret.items = Object.keys( ret.items || { } ).map( function( itemId ) { return { "id" : itemId }; } );
-				callback( null, ret );
-
-			} );
-
-		},
-
-		getItem: function( collectionName, itemId, callback ) {
-
-			findCollection( collectionName, function( err, collection ) {
-
-				if( err ) return callback( err );
-				if( !( itemId in ( collection.items || { } ) ) )
-					return callback( new Error( "Item does not exist" ) );
-
-				callback( null, collection.items[ itemId ] );
-
-			} );
-
-		},
-
-		getItemOrTemplate: function( collectionName, itemId, callback ) {
-
-			findCollection( collectionName, function( err, collection ) {
-
-				if( err ) throw err;
-				var exists = itemId in ( collection.items || { } );
-				var ret = exists ? collection.items[ itemId ] : { id: itemId };
-				callback( null, ret, exists );
-
-			} );
-
-		}
-
-	};
-
-}
-
-function Latch( countdown, done ) { if(countdown===0) done(); this.countdown = function() { if(--countdown === 0) done(); }; }
-
-function clone( jsonObject ) {
-
-	return JSON.parse( JSON.stringify( jsonObject ) );
-
-}
-
-function generateUUID() {
-
-	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace( /[xy]/g, function( c ) {
-
-		var r = Math.random() * 16 | 0, v = c == 'x' ? r : ( r & 0x3 | 0x8);
-		return v.toString( 16 );
-
-	} );
+	context.repo = new fakeRepo.Repo();
 
 }
 

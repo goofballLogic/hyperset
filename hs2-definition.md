@@ -92,7 +92,7 @@ Available media types include:
 
 | Type | Meaning |
 |------|---------|
-| text/html *or* application/vnd.hyperset.collection+html| HTML page <br/> - one list-item + link per item. <br />- link to the application in the &lt;h1&gt; element<br /> - self-link to collection in the &lt;h2&gt; element <br /> - one form to create a new item in the &lt;form id="add-item" . . .&gt; tag<br /> - one form to find the form for adding/updating an item with id in the &lt;form id="upsert-item" . . .&gt;. *NOTE* that submitting this form will result in a redirect to the edit item form (see below) |
+| text/html *or* application/vnd.hyperset.collection+html| HTML page <br/> - one list-item + link per item. <br />- link to the application in the &lt;h1&gt; element<br /> - self-link to collection in the &lt;h2&gt; element <br /> - one form to create a new item in the &lt;form id="add-item" . . .&gt; tag<br /> - one &lt;form&gt; to find the form for adding/updating an item with id in the &lt;form id="locate-upsert-item" . . .&gt;. *NOTE* that submitting this form will result in a redirect to the edit item form (see below) |
 | application/json *or* application/vnd.hyperset.collection+json | JSON representation of the collection.|
 
 ####. . . +html
@@ -106,7 +106,7 @@ Available media types include:
 			<h1><a href="http://store.widgets.nearstate.com">Widgets</a></h1>
 			<h2><a href="http://store.widgets.nearstate.com/--collectionPath--">--collectionName--</a></h2>
 			<h3>Items</h3>
-			<form id="upsert-item" action="http://store.widgets.nearstate.com/--upsertCollectionItemPath--" method="POST">
+			<form id="locate-upsert-item" action="http://store.widgets.nearstate.com/--locateUpsertItemPath--" method="POST">
 				<label for="itemId">Id</label>
 				<input name="itemId" />
 				<input type="submit" value="Find add/update form" />
@@ -175,7 +175,7 @@ Available media types include:
 
 | Type | Meaning |
 |------|---------|
-| text/html *or* application/vnd.hyperset.item+html | HTML page<br />- link to the application in the &lt;h1&gt; element<br />- link to the item's collection in the &lt;h2&gt; element<br />- self-link to item in the &lt;h3&gt; element<br />- item content<br />- link to the upsert-item page ("Edit") |
+| text/html *or* application/vnd.hyperset.item+html | HTML page<br />- link to the application in the &lt;h1&gt; element<br />- link to the item's collection in the &lt;h2&gt; element<br />- self-link to item in the &lt;h3&gt; element<br />- item content<br />- link to the upsert-item page ("Edit")<br />- &lt;form&gt; to delete the item *NOTE* that, if the delete succeeds, the user agent will be redirected to the collection which contained the deleted item. |
 | application/json *or* application/vnd.hyperset.item+json | JSON representation of the item. See *vnd.hyperset.item+json* below. |
 
 ###. . . +html
@@ -193,6 +193,10 @@ Available media types include:
 			<h3><a href="http://store.widgets.nearstate.com/--itemPath--">--itemId--</a></h3>
 			<div id="content">--itemContent--</div>
 			<a href="http://store.widgets.nearstate.com/--upsertItemPath--">Edit</a>
+			<form method="POST" action="http://store.widgets.nearstate.com/--deleteItemRequestsPath--">
+				<input type="hidden" name="itemId" value="--itemId--" />
+				<input type="submit" value="Delete" />
+			</form>
 		</body>
 	</html>
 	
@@ -227,7 +231,7 @@ Available media types include:
 
 | Type | Meaning |
 |------|---------|
-| text/html *or* application/vnd.hyperset.item-editor+html | HTML page<br />- link to the application in the &lt;h1&gt; element<br />- link to the item's collection in the &lt;h2&gt; element<br />- if it already exists on the server, a link to item in the &lt;h3&gt; element<br />- form to edit the item content, the label of the textarea of which contains either "Create" or "Update" depending on whether the resource already exists on the server |
+| text/html *or* application/vnd.hyperset.item-editor+html | HTML page<br />- link to the application in the &lt;h1&gt; element<br />- link to the item's collection in the &lt;h2&gt; element<br />- if it already exists on the server, a link to item in the &lt;h3&gt; element<br />- &lt;form&gt; to edit the item content, the label of the textarea of which contains either "Create" or "Update" depending on whether the resource already exists on the server |
 
 ###. . . +html
 
@@ -241,7 +245,6 @@ Available media types include:
 			<h2><a href="http://store.widgets.nearstate.com/--collectionPath--">--collectionName--</a></h2>
 			<h3><a href="http://store.widgets.nearstate.com/--itemPath--">--itemId--</a></h3>
 			<form action="http://store.widgets.nearstate.com/--upsertItemPath--" method="POST">
-				<input type="hidden" name="_method" value="PUT" />
 				<label for="itemContent">Create item --or-- Update item content</label>
 				<textarea name="itemContent" id="itemContent">--itemContent--</textarea>
 				<input type="submit" value="Create --or-- Update" />

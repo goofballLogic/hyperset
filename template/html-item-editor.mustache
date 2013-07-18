@@ -8,9 +8,8 @@
         <h2><a href="{{collection.url}}">{{collection.name}}</a></h2>
         <h3><a href="{{url}}">{{id}}</a></h3>
         <form action="{{upsert-url}}" method="POST">
-        	<input type="hidden" name="_method" value="PUT" />
-        	<label for="itemContent">{{form-description}}</label>
-        	<textarea name="item-content">{{content}}</textarea>
+        	<label for="content">{{form-description}}</label>
+        	<textarea name="content">{{content}}</textarea>
         	<input type="submit" value="{{form-submit-action}}" />
         </form>
     </body>
