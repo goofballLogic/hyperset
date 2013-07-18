@@ -1,13 +1,26 @@
+#Hyperset(2) module definition
+This doc covers the client-facing API for hyperset(2 (0.3.0 - )
+
+### Configuration  and usage
+For details of configuring and running the Hyperset server, see [here] [1].
+[1]: hs2-usage.md "here"
+
+### Repositories
+Hyperset works with a variety of back-end persistence and integration mechanisms. You can implement your own using the API documented [here] [1].
+
+[1]: hs2-api.md "here"
+
+## Design notes
+
+Note that items can only belong to one collection. If you need a many to many relationship, you need to define a collection of "set" items, then link the "member" items to the appropriate sets. 
+
 ## Document conventions
 
 A name bracketed by double-dashes ```--xyz--``` indicates the location of an entity-specific value at run-time. Don't confuse this with ```{{xyz}}``` which is an actual placeholder returned to the caller by the API, as part of a URL template.
 
 Within a code block, multiple possible attribute values are indicated using ``` --or-- ```.
 
-## Design notes
-
-Note that items can only belong to one collection. If you need a many to many relationship, you need to define a collection of "set" items, then link the "member" items to the appropriate sets. 
-
+	 
 ## Entry point URL
 An application endpoint defines the available collections.
 

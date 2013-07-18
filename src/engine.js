@@ -259,7 +259,6 @@ function Engine( config, repo, onComplete ) {
 
 	function deleteItem( req, res ) {
 
-console.log( req.body );
 		repo.deleteItem( req.params.collectionName, req.body.itemId, function( err ) {
 
 			if( err ) throw err;
