@@ -6,9 +6,9 @@ For details of configuring and running the Hyperset server, see [here] [1].
 [1]: hs2-usage.md "here"
 
 ### Repositories
-Hyperset works with a variety of back-end persistence and integration mechanisms. You can implement your own using the API documented [here] [1].
+Hyperset works with a variety of back-end persistence and integration mechanisms. You can implement your own using the API documented [here] [2].
 
-[1]: hs2-api.md "here"
+[2]: hs2-api.md "here"
 
 ## Design notes
 
