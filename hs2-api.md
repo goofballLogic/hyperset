@@ -29,3 +29,19 @@ The hyperset module comes with a built-in Riak repository. Other repositories ar
 * [Planned] MySQL (???) (hyperset-mysql)
 * [Planned] Amazon Dynamo DB (hyperset-dynamo-db)
 * [Planned] Microsoft Azure Tables (hyperset-azure-tables)
+
+##Repository API
+
+All repositories must service the following interface:
+
+#####for reading
+* getCollections( callback )
+* getCollection( collectionName, callback )
+* getItem( collectionName, itemId, callback )
+* getItemOrTemplate( collectionName, itemId, callback )
+	
+#####for writing
+* addCollection( collection, callback )
+* addItem( collectionName, item, callback )
+* upsertItem( 
+	this.deleteItem = deleteItem;

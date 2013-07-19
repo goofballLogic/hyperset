@@ -82,10 +82,6 @@ function Engine( config, repo, onComplete ) {
 	while( config.appUrl[ config.appUrl.length ] == "/" )
 		config.appUrl = config.appUrl.substring( 0, config.appUrl.length - 1 );
 
-	app.use( function( req, res, next ) {
-		//console.log( req.method, req.url );
-		next();
-	} );
 	app.use( express.bodyParser() );
 
 	app.get(	config.pathname,											renderApp			);
@@ -98,6 +94,20 @@ function Engine( config, repo, onComplete ) {
 	app.post(	config.pathname + "/:collectionName/upsertLocateRequests",	locateUpsert		);
 	app.post(	config.pathname + "/:collectionName/deleteRequests",		deleteItem			);
 	app.post(	config.pathname + "/:collectionName/:itemId/item-edits",	upsertItem			);
+
+	app.use( function( err, req, res, next ) {
+
+		if( err.code && err.code == 404 ) {
+
+			res.send( err.code, err.message );
+
+		} else {
+
+			return next( err );
+
+		}
+
+	} );
 
 	if( onComplete ) whiskers.ensureLoaded( function() { onComplete( engine ); } );
 
@@ -117,11 +127,11 @@ function Engine( config, repo, onComplete ) {
 
 	}
 
-	function renderApp( req, res ) {
+	function renderApp( req, res, next ) {
 
 		repo.getCollections( function( err, collections ) {
 
-			if( err ) throw err;
+			if( err ) return next( err );
 			var model = { };
 			for( var k in config ) model[ k ] = config[ k ];
 			model.collections = collections.map( factory.buildModelCollection );
@@ -131,11 +141,11 @@ function Engine( config, repo, onComplete ) {
 
 	}
 
-	function renderCollection( req, res ) {
+	function renderCollection( req, res, next ) {
 
 		repo.getCollection( req.params.collectionName, function( err, model ) {
 
-			if( err ) throw err;
+			if( err ) return next( err );
 			model.app = { };
 			for( var k in config ) model.app[ k ] = config[ k ];
 			model.url = factory.buildCollectionUrl( model.name );
@@ -147,11 +157,11 @@ function Engine( config, repo, onComplete ) {
 
 	}
 
-	function renderItem( req, res ) {
+	function renderItem( req, res, next ) {
 
-		repo.getItem( req.params.collectionName, req.params.itemId, function( err, model) {
+		repo.getItem( req.params.collectionName, req.params.itemId, function( err, model ) {
 
-			if( err ) throw err;
+			if( err ) return next( err );
 			model.app = { };
 			for( var k in config ) model.app[ k ] = config[ k ];
 			model.collection = { name: req.params.collectionName };
@@ -165,11 +175,11 @@ function Engine( config, repo, onComplete ) {
 
 	}
 
-	function renderItemEditor( req, res ) {
+	function renderItemEditor( req, res, next ) {
 
 		repo.getItemOrTemplate( req.params.collectionName, req.params.itemId, function( err, model, exists ) {
 
-			if( err ) throw err;
+			if( err ) return next( err );
 			model.app = { };
 			for( var k in config ) model.app[ k ] = config[ k ];
 			model.collection = { name: req.params.collectionName };
@@ -184,23 +194,23 @@ function Engine( config, repo, onComplete ) {
 
 	}
 
-	function addCollection( req, res ) {
+	function addCollection( req, res, next ) {
 
 		var contentType = req.headers[ "content-type" ] || "";
 
 		if( !!~contentType.indexOf( "x-www-form-urlencoded" ) )
-			return addCollectionByForm( req, res );
+			return addCollectionByForm( req, res, next );
 
-		throw "Not implemented: Handle invalid content type";
+		return next( new Error( "Not implemented: Handle invalid content type" ) );
 
 	}
 
-	function addCollectionByForm( req, res ) {
+	function addCollectionByForm( req, res, next ) {
 
 		var collection = { name: req.body.collectionName };
 		repo.addCollection( collection, function( err, created) {
 
-			if( err ) throw err;
+			if( err ) return next( err );
 			res.setHeader( "location", factory.buildCollectionUrl( created.name ) );
 			res.send( 201 );
 
@@ -208,24 +218,24 @@ function Engine( config, repo, onComplete ) {
 
 	}
 
-	function addItem( req, res ) {
+	function addItem( req, res, next ) {
 
 		var contentType = req.headers[ "content-type" ] || "";
 
 		if( !!~contentType.indexOf( "x-www-form-urlencoded" ) )
-			return addItemByForm( req, res );
+			return addItemByForm( req, res, next );
 
-		throw "No implemented: Handle invalid content type";
+		return next( new Error( "No implemented: Handle invalid content type" ) );
 	}
 
-	function addItemByForm( req, res ) {
+	function addItemByForm( req, res, next ) {
 
 		var item = { content: req.body.content || null };
 		var collectionName = req.params.collectionName;
 
-		repo.addItem( collectionName, item, function( err, created ) {
+		repo.upsertItem( collectionName, item, function( err, created ) {
 
-			if( err ) throw err;
+			if( err ) return next( err );
 			res.setHeader( "location", factory.buildItemUrl( collectionName, created ) );
 			res.send( 201 );
 
@@ -240,18 +250,34 @@ function Engine( config, repo, onComplete ) {
 
 	}
 
-	function upsertItem( req, res ) {
+	function upsertItem( req, res, next ) {
 
 		repo.getItemOrTemplate( req.params.collectionName, req.params.itemId, function( err, model, exists ) {
 
-			if( err ) throw err;
+			if( err ) return next( err );
 			model.content = req.body.content;
-			repo.upsertItem( req.params.collectionName, model, function( err ) {
+			try {
 
-				if( err ) throw err;
-				renderItemEditor( req, res );
+				repo.upsertItem( req.params.collectionName, model, function( err ) {
 
-			} );
+					if( err ) return next( err );
+					try {
+
+						renderItemEditor( req, res );
+
+					} catch( e ) {
+
+						return next( e );
+
+					}
+
+				} );
+
+			} catch( e ) {
+
+				return next( e );
+
+			}
 
 		} );
 

@@ -643,7 +643,7 @@ describe( "Given an app", function() {
 
 										it( "it no longer has the deleted item in the list", function() {
 
-											this.res.$body.find( "ul li" ).should.equal( 0 );
+											this.res.$body.find( "ul li" ).length.should.equal( 0 );
 
 										} );
 

@@ -1,6 +1,17 @@
+var util = require( "util" );
+
 module.exports = {
 	"Repo" : Repo
 };
+
+util.inherits( NotFoundError, Error );
+function NotFoundError( message ) {
+
+	Error.captureStackTrace( this, NotFoundError );
+	this.message = message || "Error";
+	this.code = 404;
+
+}
 
 function Repo() {
 
@@ -11,7 +22,6 @@ function Repo() {
 	this.getItemOrTemplate = getItemOrTemplate;
 	// mutate
 	this.addCollection = addCollection;
-	this.addItem = addItem;
 	this.upsertItem = upsertItem;
 	this.deleteItem = deleteItem;
 
@@ -20,7 +30,7 @@ function Repo() {
 	function findCollection( collectionName, callback ) {
 
 		var collection = collections[ collectionName ];
-		if( !collection ) return callback( new Error( "Collection does not exist") );
+		if( !collection ) return callback( new NotFoundError( "Collection does not exist") );
 		callback( null, collection );
 
 	}
@@ -32,7 +42,7 @@ function Repo() {
 
 	}
 
-	function addItem( collectionName, item, callback ) {
+	function upsertItem( collectionName, item, callback ) {
 
 		findCollection( collectionName, function( err, collection ) {
 
@@ -96,8 +106,7 @@ function Repo() {
 
 			if( err ) return callback( err );
 			if( !( itemId in ( collection.items || { } ) ) )
-				return callback( new Error( "Item does not exist" ) );
-
+				return callback( new NotFoundError( "Item does not exist" ) );
 			callback( null, clone( collection.items[ itemId ] ) );
 
 		} );
@@ -117,19 +126,13 @@ function Repo() {
 
 	}
 
-	function upsertItem( collectionName, item, callback ) {
-
-		addItem( collectionName, item, callback );
-
-	}
-
 	function deleteItem( collectionName, itemId, callback ) {
 
 		findCollection( collectionName, function( err, collection ) {
 
 			if( err ) return callback( err );
 			if( !( itemId in ( collection.items || { } ) ) )
-				return callback( new Error( "Item does not exist") );
+				return callback( new NotFoundError( "Item does not exist") );
 
 			delete collection.items[ itemId ];
 			callback( null );
