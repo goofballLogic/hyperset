@@ -103,6 +103,7 @@ function Engine( config, repo, onComplete ) {
 
 		} else {
 
+			if ( err ) console.log( err );
 			return next( err );
 
 		}
