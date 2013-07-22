@@ -208,8 +208,7 @@ function Engine( config, repo, onComplete ) {
 
 	function addCollectionByForm( req, res, next ) {
 
-		var collection = { name: req.body.collectionName };
-		repo.addCollection( collection, function( err, created) {
+		repo.addCollection( req.body.collectionName, function( err, created) {
 
 			if( err ) return next( err );
 			res.setHeader( "location", factory.buildCollectionUrl( created.name ) );

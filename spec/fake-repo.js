@@ -35,10 +35,10 @@ function Repo() {
 
 	}
 
-	function addCollection( collection, callback ) {
+	function addCollection( collectionName, callback ) {
 
-		collections[ collection.name ] = clone( collection );
-		getCollection( collection.name, callback );
+		collections[ collectionName ] = { name: collectionName };
+		getCollection( collectionName, callback );
 
 	}
 

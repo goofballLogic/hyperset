@@ -159,11 +159,12 @@ function utilitiesConfigureRepo( context ) {
 
 function utilitiesConfigureWidgetsCollections( context, done ) {
 
-	context.repo.addCollection( { name: "collection1" }, function( err ) {
+	context.repo.addCollection( "collection1", function( err ) {
 
-		context.repo.addCollection( { name: "collection2" }, done );
+		context.repo.addCollection( "collection2", done );
 
 	} );
+
 }
 
 function utilitiesConfigureWidgets( context ) {
