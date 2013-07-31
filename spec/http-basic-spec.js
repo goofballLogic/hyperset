@@ -211,13 +211,13 @@ describe( "Given an app", function() {
 
 						} );
 
-						it( "it returns 302 Found", function() {
+						it( "it returns 302 Found (redirect)", function() {
 
 							this.res.statusCode.should.equal( 302 );
 
 						} );
 
-						describe( "and the upsert-item form is requested", function() {
+						describe( "and the redirect is followed to the upsert-item form", function() {
 
 							beforeEach( function( done ) {
 

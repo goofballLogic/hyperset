@@ -39,7 +39,7 @@ function behaviourSubmitFormWithValues( context, formSelector, formValues, callb
 		var name = $field.attr( "name" );
 		var submission = name + "=";
 		if( name in formValues ) submission += encodeURIComponent( formValues[name] );
-		else submission += encodeURIComponent( $field.val( ) );
+		else submission += encodeURIComponent( $field.val() );
 		payload.push( submission );
 	} );
 

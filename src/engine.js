@@ -97,7 +97,7 @@ function Engine( config, repo, onComplete ) {
 
 	app.use( function( err, req, res, next ) {
 
-		if( err.code && err.code == 404 ) {
+		if( err.code && !!~[ 404, 409 ].indexOf( err.code ) ) {
 
 			res.send( err.code, err.message );
 
@@ -208,10 +208,11 @@ function Engine( config, repo, onComplete ) {
 
 	function addCollectionByForm( req, res, next ) {
 
-		repo.addCollection( req.body.collectionName, function( err, created) {
+		var collectionName = req.body.collectionName;
+		repo.addCollection( collectionName, function( err ) {
 
 			if( err ) return next( err );
-			res.setHeader( "location", factory.buildCollectionUrl( created.name ) );
+			res.setHeader( "location", factory.buildCollectionUrl( collectionName ) );
 			res.send( 201 );
 
 		} );

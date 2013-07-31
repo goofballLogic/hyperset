@@ -50,7 +50,7 @@ All repositories must service the following interface. ( &nbsp;&harr;&nbsp; indi
 
 ####for writing
 * addCollection( collectionName, callback )
-	*&nbsp;&nbsp;&harr;&nbsp; ( err, addedCollection )*
+	*&nbsp;&nbsp;&harr;&nbsp; ( err )*
 * upsertItem( collectionName, item, callback )
 	*&nbsp;&nbsp;&harr;&nbsp; ( err, item )*
 * deleteItem( collectionName, itemId, callback )
@@ -62,8 +62,9 @@ All repositories must service the following interface. ( &nbsp;&harr;&nbsp; indi
 Errors can either be protocol-specific, or generic. Protocol-specific errors (i.e. those which hyperset recognises as having particular significance) are described below. All repository methods include a ```callback``` argument, which *will* be a function accepting a first argument ```err```. Internal errors *may* be returned in ```err```, or simply thrown in the normal manner.
 #####NotFoundError
 The ```NotFoundError``` *must* have an attribute ```.code``` with value **404**, and *should* have a prototype of ```Error```.
-#####BadRequestError
-The ```BadRequestError``` *must* have an attribute ```.code``` with value **400**, and *should* have a prototype of ```Error```.
+#####ConflictError
+The ```ConflictError``` *must* have an attribute ```.code``` with value **409**, and *should* have a prototype of ```Error```.
+
 
 
 ##getCollections( callback )
@@ -119,10 +120,9 @@ The unique identifier of the item within the collection
 ###callback( err, item )
 #####err
 
-> ######hyperset tests needed
->
->If the collection does not exist, the protocol-specific ```BadRequestError``` *must* be returned.
->If the collection exists, but the item does not, the protocol-specific ```NotFoundError``` *must* be returned.
+
+If the collection does not exist, the protocol-specific ```ConflictError``` *must* be returned.
+If the collection exists, but the item does not, the protocol-specific ```NotFoundError``` *must* be returned.
 
 #####item
 An item *must* conform to the following shape:
@@ -146,19 +146,14 @@ An item *must* conform to the following shape:
 
 
 ##getItemOrTemplate( collectionName, itemId, callback )
-This method should attempt to locate an item by id within the collection specified. If the item does not exist, a template should be returned instead. The template conforms to the specified shape for an item. Hyperset calls this method e.g. when rendering the HTML editing forms, which when submitted result in a call to **upsertItem**. The template should contain an id which is guaranteed to be unique for an item which has not yet been created.
-
-> ######hyperset tests needed
-> hyperset will respect the id returned from a subsequent upsertItem call, so there is no necessity for the id returned as part of a template to be the same id as that of the resource eventually created from the template.
-
+This method should attempt to locate an item by id within the collection specified. If the item does not exist, a template should be returned instead. The template conforms to the specified shape for an item. Hyperset calls this method e.g. when rendering the HTML editing forms, which when submitted result in a call to **upsertItem**. The template should contain the specified id.
 #####collectionName
 The unique identifier for the collection
 #####itemId
 The unique identifier of the item within the collection to try to find.
 ###callback( err, itemOrTemplate, isExistingItem )
 #####err
-> ######hyperset tests needed
->If the collection does not exist, the protocol-specific ```BadRequestError``` *must* be returned
+If the collection does not exist, the protocol-specific ```ConflictError``` *must* be returned
 
 #####itemOrTemplate
 An itemOrTemplate *must* conform to the shape outlined for items in the **getItem** method
@@ -168,3 +163,46 @@ If the item was found, this value *must* be truthy. If a template is returned, t
 
 
 ##addCollection( collectionName, callback )
+Calling this method *should* initialise a collection, meaning that it *must* appear in subsequent calls to e.g. **getCollections**.
+#####collectionName
+The collection name, *will* be a string, between 1 and 128 characters in length. It *should* be unique within the application. If a collection of that name already exists within the application, a ConflictError will be returned.
+###callback( err )
+If a collection of the same name already exists, a protocol-specific ```ConflictError``` *must* be returned.
+
+
+
+##upsertItem( collectionName, item, callback )
+Calling this method *should* set the value of an item for the specified item id, within the specified collection. It can thus be used either to add a new item into a collection, or to replace the value of an existing item. Subsequent calls to e.g. **getItem** using the same ```collectionName``` + ```itemId``` *must* return the specified content.
+#####collectionName
+The unique identifier for the collection.
+#####item
+A JSON object specifying the itemId and contents of the item. The item *will* conform to the following shape:
+
+	{
+		"id" : "--itemId--",
+		"content" : --itemContent--
+	}
+e.g.
+
+	{
+		"id" : "NS2004",
+		"content" :  {
+			"name" : "2 inch, box head, ring shank",
+			"size" : "2 inch"
+			"head" : "box"
+			"shank" : "ring"
+		}
+	}
+###callback( err, item )
+This callback *must* match the signature and semantics of the callback for **getItem**. It is suggested that this callback *might* be implemented internally by invoking the handler for **getItem** after the persistence of changes is complete. The implementation *should* return an item based on retrieving the item from the persistence store, rather than by synthesising a representation from the input values.
+
+
+
+##deleteItem( collectionName, itemId, callback )
+This method *should* remove the item identified by the ```itemId``` from the collection identified by the ```collectionName```. Subsequent calls to e.g. ```getItem``` *must* return a ```NotFoundError```.
+
+Note that, unlike HTTP, hyperset will only understand the ```NotFoundError``` which has a code of 404. Returning an error with any other code (e.g. 410, a la HTTP's "Gone" status) will be interpreted as an internal error, and hyperset will emit a 500 Internal Server Error in response to its original caller.
+###callback( err )
+#####err
+If the delete succeeds, the implementer should indicate success by invoking the callback with null as the only argument.
+If the collection does not exist, the protocol-specific ```ConflictError``` *must* be returned. If the item does not exist, the protocol-specific ```NotFoundError``` *must* be returned

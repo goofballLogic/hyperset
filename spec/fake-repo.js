@@ -12,6 +12,14 @@ function NotFoundError( message ) {
 	this.code = 404;
 
 }
+util.inherits( ConflictError, Error );
+function ConflictError( message ) {
+
+	Error.captureStackTrace( this, ConflictError );
+	this.message = message || "Error";
+	this.code = 409;
+
+}
 
 function Repo() {
 
@@ -37,8 +45,9 @@ function Repo() {
 
 	function addCollection( collectionName, callback ) {
 
+		if( collectionName in collections ) return callback( new ConflictError( "Collection already exists" ) );
 		collections[ collectionName ] = { name: collectionName };
-		getCollection( collectionName, callback );
+		callback( null );
 
 	}
 
@@ -46,14 +55,12 @@ function Repo() {
 
 		findCollection( collectionName, function( err, collection ) {
 
-			if(err) return callback( err );
-
+			if( err ) return callback( IfNotFoundThenConflict( err ) );
 			collection.items = collection.items || { };
 			var newItem = { };
 			for( var k in item ) newItem[ k ] = item[ k ];
 			newItem.id = newItem.id || generateUUID();
 			collection.items[ newItem.id ] = newItem;
-
 			getItem( collectionName, newItem.id, callback );
 
 		} );
@@ -91,7 +98,6 @@ function Repo() {
 		findCollection( collectionName, function( err, collection ) {
 
 			if( err ) return callback( err );
-
 			var ret = clone( collection );
 			ret.items = Object.keys( ret.items || { } ).map( function( itemId ) { return { "id" : itemId }; } );
 			callback( null, ret );
@@ -104,7 +110,7 @@ function Repo() {
 
 		findCollection( collectionName, function( err, collection ) {
 
-			if( err ) return callback( err );
+			if( err ) return callback( IfNotFoundThenConflict( err ) );
 			if( !( itemId in ( collection.items || { } ) ) )
 				return callback( new NotFoundError( "Item does not exist" ) );
 			callback( null, clone( collection.items[ itemId ] ) );
@@ -130,7 +136,7 @@ function Repo() {
 
 		findCollection( collectionName, function( err, collection ) {
 
-			if( err ) return callback( err );
+			if( err ) return callback( IfNotFoundThenConflict( err ) );
 			if( !( itemId in ( collection.items || { } ) ) )
 				return callback( new NotFoundError( "Item does not exist") );
 
@@ -140,6 +146,13 @@ function Repo() {
 		} );
 
 	}
+}
+
+function IfNotFoundThenConflict( err ) {
+
+	if( err instanceof NotFoundError ) return new ConflictError( err.message );
+	return err;
+
 }
 
 function Latch( countdown, done ) { if(countdown===0) done(); this.countdown = function() { if(--countdown === 0) done(); }; }
