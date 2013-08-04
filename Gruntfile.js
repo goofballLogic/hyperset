@@ -6,8 +6,18 @@ module.exports = function( grunt ) {
 
 		watch: {
 
-			files: [ "src/**/*.*", "spec/**/*.*", "template/**/*.*" ],
-			tasks: [ "mochaTest" ]
+			"main": {
+
+				files: [ "src/**/*.*", "spec/**/*.*", "template/**/*.*" ],
+				tasks: [ "clear", "mochaTest" ]
+
+			},
+
+			"repo" : {
+
+				files: [ "src/*-repo.js", "dev/repos/*.js" ],
+				tasks: [ "clear", "exec:repoTest" ]
+			}
 
 		},
 
@@ -26,14 +36,29 @@ module.exports = function( grunt ) {
 
 			}
 
+		},
+
+		exec: {
+
+			repoTest: {
+
+				command: "node ./dev/repos/test.js ./src/json-repo.js"
+
+			}
+
 		}
 
 	} );
 
 	grunt.loadNpmTasks( "grunt-contrib-watch" );
 	grunt.loadNpmTasks( "grunt-mocha-test" );
+	grunt.loadNpmTasks( "grunt-exec" );
+	grunt.loadNpmTasks( "grunt-clear" );
 
 	grunt.registerTask( "test", [ "mochaTest" ] );
-	grunt.registerTask( "auto-test", [ "watch" ] );
+	grunt.registerTask( "auto-test", [ "watch:main" ] );
+	grunt.registerTask( "repo-test", [ "exec:repoTest" ] );
+	grunt.registerTask( "auto-repo-test", [ "watch:repo" ] );
+
 };
 

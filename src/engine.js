@@ -5,7 +5,12 @@ var whiskers = require( "./whiskers" );
 
 module.exports = {
 
-	"Engine" : Engine
+	"Engine" : Engine,
+	"repos" : {
+
+		"json" : require( "./json-repo" )
+
+	}
 
 };
 
