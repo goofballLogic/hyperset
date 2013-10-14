@@ -126,7 +126,7 @@
 				} );
 				else {
 
-					callback( null, { "itemId" : itemId, "content" : null } );
+					callback( null, { "id" : itemId, "content" : null } );
 
 				}
 
@@ -150,12 +150,14 @@
 			ensureRepoFolder( function( err ) {
 
 				if( err ) return callback( err );
+				if( !item.id ) item.id = uuid();
 				var json = JSON.stringify( item );
-				var filePath = itemPath( collectionName, item.itemId );
+				var filePath = itemPath( collectionName, item.id );
+
 				fs.writeFile( filePath, json, function( err ) {
 
 					if( err ) callback( err );
-					getItem( collectionName, item.itemId, callback );
+					getItem( collectionName, item.id, callback );
 
 				} );
 
@@ -193,7 +195,7 @@
 				if( err ) return callback( err );
 				collection.items = files.map( function( filename ) {
 
-					return { itemId: filename.substring( 0, filename.length - 5 ) };
+					return { id: filename.substring( 0, filename.length - 5 ) };
 
 				} );
 				callback();
@@ -219,6 +221,16 @@
 
 		this.count = function() { countdown--; if( countdown === 0 ) callback(); };
 		this.bust = function() { if(countdown <= 0) return; countdown = 0; callback(); };
+
+	}
+
+	// thanks: http://stackoverflow.com/a/2117523
+	function uuid() {
+
+		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+			var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+			return v.toString(16);
+		});
 
 	}
 

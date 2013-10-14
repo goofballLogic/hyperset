@@ -69,13 +69,13 @@ var tests = [ {
 	name: "When upsertItem is called against the added collection, should return the input item",
 	test: function( done ) {
 
-		testData.item1 = { itemId : uuid(), content: "hello world" };
+		testData.item1 = { id : uuid(), content: "hello world" };
 		newRepo().upsertItem( testData.addedCollectionName, testData.item1, function( err, item ) {
 
 			if( err ) throw err;
 			if( !item ) throw new Error( "No item returned" );
 			if( item === testData.item1 ) throw new Error( "A reference to the object sent in as input was received back as the result" );
-			if( testData.item1.itemId != item.itemId ) throw new Error( "ItemId attributes do not match" );
+			if( testData.item1.id != item.id ) throw new Error( "id attributes do not match" );
 			if( testData.item1.content != item.content ) throw new Error( "Contents do not match" );
 			done();
 
@@ -90,8 +90,8 @@ var tests = [ {
 
 		findCollection( testData.addedCollectionName, function( collection ) {
 
-			var itemIds = collection.items.map( function( item ) { return item.itemId; } );
-			if( !~itemIds.indexOf( testData.item1.itemId ) ) throw new Error( "Added item was not included" );
+			var ids = collection.items.map( function( item ) { return item.id; } );
+			if( !~ids.indexOf( testData.item1.id ) ) throw new Error( "Added item was not included" );
 			done();
 
 		} );
@@ -103,12 +103,12 @@ var tests = [ {
 	name: "When getItem is called, it should match the added item",
 	test: function( done ) {
 
-		newRepo().getItem( testData.addedCollectionName, testData.item1.itemId, function( err, item ) {
+		newRepo().getItem( testData.addedCollectionName, testData.item1.id, function( err, item ) {
 
 			if( err ) throw err;
 			if( !item ) throw new Error( "No item returned" );
 			if( item === testData.item1 ) throw new Error( "A reference to the object sent in as input was received back as the result" );
-			if( testData.item1.itemId != item.itemId ) throw new Error( "ItemId attributes do not match" );
+			if( testData.item1.id != item.id ) throw new Error( "id attributes do not match" );
 			if( testData.item1.content != item.content ) throw new Error( "Contents do not match" );
 			done();
 
@@ -121,7 +121,7 @@ var tests = [ {
 	name: "When getItemOrTemplate is called for the id of the added item, it should indicate that it exists",
 	test: function( done ) {
 
-		newRepo().getItemOrTemplate( testData.addedCollectionName, testData.item1.itemId, function( err, item, isExisting ) {
+		newRepo().getItemOrTemplate( testData.addedCollectionName, testData.item1.id, function( err, item, isExisting ) {
 
 			if( err ) throw err;
 			if( !isExisting ) throw new Error( "API reported that the item does not exist" );
@@ -136,12 +136,12 @@ var tests = [ {
 	name: "When getItemOrTemplate is called for the id of the added item, it should return the added item",
 	test: function( done ) {
 
-		newRepo().getItemOrTemplate( testData.addedCollectionName, testData.item1.itemId, function( err, item, isExisting ) {
+		newRepo().getItemOrTemplate( testData.addedCollectionName, testData.item1.id, function( err, item, isExisting ) {
 
 			if( err ) throw err;
 			if( !item ) throw new Error( "No item returned" );
 			if( item === testData.item1 ) throw new Error( "A reference to the object sent in as input was received back as the result" );
-			if( testData.item1.itemId != item.itemId ) throw new Error( "ItemId attributes do not match" );
+			if( testData.item1.id != item.id ) throw new Error( "id attributes do not match" );
 			if( testData.item1.content != item.content ) throw new Error( "Contents do not match" );
 			done();
 
@@ -173,7 +173,7 @@ var tests = [ {
 
 			if( err ) throw err;
 			if( !template ) throw new Error( "No template returned" );
-			if( template.itemId != newId ) throw new Error( "itemId for the template is incorrect" );
+			if( template.id != newId ) throw new Error( "id for the template is incorrect" );
 			if( template.content !== null ) throw new Error( "content for the template is not a null-valued attribute" );
 			done();
 
@@ -211,10 +211,10 @@ var tests = [ {
 		newRepo().getCollection( testData.addedCollectionName, function( err, collection ) {
 
 			if( err ) throw err;
-			var itemIds = collection.items.map( function( item ) { return item.itemId; } );
-			if( itemIds.length != 2 ) throw new Error( "Expected 2 items, but number listed was " + itemIds.length );
-			if( !~itemIds.indexOf( testData.item1.itemId ) ) throw new Error( "Item1 not listed" );
-			if( !~itemIds.indexOf( testData.item2.itemId ) ) throw new Error( "Item2 not listed");
+			var ids = collection.items.map( function( item ) { return item.id; } );
+			if( ids.length != 2 ) throw new Error( "Expected 2 items, but number listed was " + ids.length );
+			if( !~ids.indexOf( testData.item1.id ) ) throw new Error( "Item1 not listed" );
+			if( !~ids.indexOf( testData.item2.id ) ) throw new Error( "Item2 not listed");
 			done();
 
 		} );
@@ -226,7 +226,7 @@ var tests = [ {
 	name: "When deleteItem is called for the second item, should not throw",
 	test: function( done ) {
 
-		newRepo().deleteItem( testData.addedCollectionName, testData.item2.itemId, function( err ) {
+		newRepo().deleteItem( testData.addedCollectionName, testData.item2.id, function( err ) {
 
 			if( err ) throw err;
 			done();
@@ -243,8 +243,39 @@ var tests = [ {
 		newRepo().getCollection( testData.addedCollectionName, function( err, collection ) {
 
 			if( err ) throw err;
-			if( collection.items.length != 1 ) throw new Error( "Expected 1 item, but number listed was " + itemIds.length );
-			if( collection.items[ 0 ].itemId != testData.item1.itemId ) throw new Error( "The wrong item was deleted" );
+			if( collection.items.length != 1 ) throw new Error( "Expected 1 item, but number listed was " + ids.length );
+			if( collection.items[ 0 ].id != testData.item1.id ) throw new Error( "The wrong item was deleted" );
+			done();
+
+		} );
+
+	}
+
+}, {
+
+	name: "When upsertItem is called with content but no id, it should have created an id for the item",
+	test: function( done ) {
+
+		newRepo().upsertItem( testData.addedCollectionName, { content: "hello world" }, function( err, item ) {
+
+			if( err ) throw err;
+			if( !item.id ) throw new Error( "Upserted item's id is not valid: " + item.id );
+			testData.generatedId = item.id;
+			done();
+
+		} );
+
+	}
+
+}, {
+
+	name: "When the added item is requested, it should exist",
+	test: function( done ) {
+
+		newRepo().getItemOrTemplate( testData.addedCollectionName, testData.generatedId, function( err, item, isExisting ) {
+
+			if( err ) throw err;
+			if( !isExisting ) throw new Error( "API reports that the item does not yet exist" );
 			done();
 
 		} );
@@ -271,7 +302,7 @@ function findCollection( collectionName, callback ) {
 
 		if( err ) throw err;
 		if( !collection ) throw new Error( "No collection returned" );
-		callback( collection);
+		callback( collection );
 
 	} );
 

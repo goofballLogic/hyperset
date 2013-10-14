@@ -23,7 +23,7 @@ module.exports = function( grunt ) {
 
 		mochaTest: {
 
-			test: {
+			testHttp: {
 
 				options: {
 
@@ -32,7 +32,20 @@ module.exports = function( grunt ) {
 
 				},
 
-				src: [ "spec/**/*-spec.js" ]
+				src: [ "spec/**/http-*-spec.js" ]
+
+			},
+
+			testJSON: {
+
+				options: {
+
+					reporter: "spec",
+					growl: true
+
+				},
+
+				src: [ "spec/**/json-*-spec.js"]
 
 			}
 

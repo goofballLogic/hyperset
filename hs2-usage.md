@@ -9,11 +9,18 @@ There are no magic filenames, the naming of the files below is entirely up to yo
 #####config.js
 
 	module.exports = {
-		appUrl: "http://store.widgets.nearstate.com",
+		appUrl: "http://store.widgets.nearstate.com/api",
 		pathname: "api",
-		port: 8080
+		port: 8080,
+		name: "
 	};
 
+
+where:
+
+```appUrl``` is the absolute URL, as requested by the client
+
+```pathName``` is the
 #####app.js
 	// create a repo
 	var repo = . . .
@@ -25,6 +32,15 @@ There are no magic filenames, the naming of the files below is entirely up to yo
 	var engine = new hyperset.Engine( config, repo, onEngineReady );
 	
 	function onEngineReady( engine ) {
+		
+		// any custom middleware
+		engine.app.use( function( req, res, next ) {
+			
+			// e.g. print request info
+			console.log( req.method, req.url );
+			next();
+			
+		} );
 		
 		// launch the web server
 		engine.listen();

@@ -233,6 +233,7 @@ describe( "Given an app", function() {
 
 							it( "it has the app and collection name in the title", function() {
 
+console.log( this.res.body );
 								var title = this.res.$body.find( "title" ).text();
 								title.should.contain( "Widgets" );
 								title.should.contain( "item" );
@@ -288,59 +289,76 @@ describe( "Given an app", function() {
 
 								} );
 
-								it( "it returns a 200 OK", function() {
+								it( "it returns a 302 Redirect", function() {
 
-									this.res.statusCode.should.equal( 200 );
-
-								} );
-
-
-								it( "it has the app and collection name in the title", function() {
-
-									var title = this.res.$body.find( "title" ).text();
-									title.should.contain( "Widgets" );
-									title.should.contain( "item" );
+									this.res.statusCode.should.equal( 302 );
 
 								} );
 
-								it( "it has the app name and link in the h1", function() {
+								describe( "and the redirect is followed", function() {
 
-									this.res.$body.find( "h1" ).text().should.equal( "Widgets" );
-									this.res.$body.find( "h1 a" ).attr( "href" ).should.equal( this.config.appUrl );
+									beforeEach( function( done ) {
 
-								} );
+										utils.behaviours.request( this, this.res.headers[ "location" ], done );
 
-								it( "it has the collection name and link in the h2", function() {
+									} );
 
-									this.res.$body.find( "h2" ).text().should.equal( "collection3" );
-									this.res.$body.find( "h2 a" ).attr( "href" ).should.equal( this.returnedCollectionLocation );
+									it( "it returns a 200 OK", function() {
 
-								} );
+										this.res.statusCode.should.equal( 200 );
 
-								it( "it has the item id and self-link in the h3", function() {
+									} );
 
-									var link = this.res.$body.find( "h3 a" );
-									link.attr( "href" ).should.contain( link.text() );
 
-								} );
+									it( "it has the app and collection name in the title", function() {
 
-								it( "it has a form with a label indicating that this is an update", function() {
+console.log( this.res.body );
+										var title = this.res.$body.find( "title" ).text();
+										title.should.contain( "Widgets" );
+										title.should.contain( "item" );
 
-									this.res.$body.find( "form" ).length.should.equal( 1 );
-									this.res.$body.find( "form label").eq( 0 ).text().should.contain( "Update" );
+									} );
 
-								} );
+									it( "it has the app name and link in the h1", function() {
 
-								it( "it has a textarea with the created item's content", function() {
+										this.res.$body.find( "h1" ).text().should.equal( "Widgets" );
+										this.res.$body.find( "h1 a" ).attr( "href" ).should.equal( this.config.appUrl );
 
-									this.res.$body.find( "form textarea" ).length.should.equal( 1 );
-									this.res.$body.find( "form textarea" ).val().should.equal( "a new thing" );
+									} );
 
-								} );
+									it( "it has the collection name and link in the h2", function() {
 
-								it( "it has a submit button labelled Update", function() {
+										this.res.$body.find( "h2" ).text().should.equal( "collection3" );
+										this.res.$body.find( "h2 a" ).attr( "href" ).should.equal( this.returnedCollectionLocation );
 
-									this.res.$body.find( "form input:submit" ).val().should.equal( "Update" );
+									} );
+
+									it( "it has the item id and self-link in the h3", function() {
+
+										var link = this.res.$body.find( "h3 a" );
+										link.attr( "href" ).should.contain( link.text() );
+
+									} );
+
+									it( "it has a form with a label indicating that this is an update", function() {
+
+										this.res.$body.find( "form" ).length.should.equal( 1 );
+										this.res.$body.find( "form label").eq( 0 ).text().should.contain( "Update" );
+
+									} );
+
+									it( "it has a textarea with the created item's content", function() {
+
+										this.res.$body.find( "form textarea" ).length.should.equal( 1 );
+										this.res.$body.find( "form textarea" ).val().should.equal( "a new thing" );
+
+									} );
+
+									it( "it has a submit button labelled Update", function() {
+
+										this.res.$body.find( "form input:submit" ).val().should.equal( "Update" );
+
+									} );
 
 								} );
 
@@ -527,59 +545,74 @@ describe( "Given an app", function() {
 
 										} );
 
-										it( "it returns a 200 OK", function() {
+										it( "it returns a 302 Redirect", function() {
 
-											this.res.statusCode.should.equal( 200 );
-
-										} );
-
-
-										it( "it has the app and collection name in the title", function() {
-
-											var title = this.res.$body.find( "title" ).text();
-											title.should.contain( "Widgets" );
-											title.should.contain( "item" );
+											this.res.statusCode.should.equal( 302 );
 
 										} );
 
-										it( "it has the app name and link in the h1", function() {
+										describe( "and the redirect is followed", function() {
 
-											this.res.$body.find( "h1" ).text().should.equal( "Widgets" );
-											this.res.$body.find( "h1 a" ).attr( "href" ).should.equal( this.config.appUrl );
+											beforeEach( function(done) {
 
-										} );
+												utils.behaviours.request( this, this.res.headers[ "location" ], done );
 
-										it( "it has the collection name and link in the h2", function() {
+											} );
 
-											this.res.$body.find( "h2" ).text().should.equal( "collection3" );
-											this.res.$body.find( "h2 a" ).attr( "href" ).should.equal( this.returnedCollectionLocation );
+											it( "it returns a 200 OK", function() {
 
-										} );
+												this.res.statusCode.should.equal( 200 );
 
-										it( "it has the item id and self-link in the h3", function() {
+											} );
 
-											var link = this.res.$body.find( "h3 a" );
-											link.attr( "href" ).should.contain( link.text() );
+											it( "it has the app and collection name in the title", function() {
 
-										} );
+												var title = this.res.$body.find( "title" ).text();
+												title.should.contain( "Widgets" );
+												title.should.contain( "item" );
 
-										it( "it has a form with a label indicating that this is an update", function() {
+											} );
 
-											this.res.$body.find( "form" ).length.should.equal( 1 );
-											this.res.$body.find( "form label").eq( 0 ).text().should.contain( "Update" );
+											it( "it has the app name and link in the h1", function() {
 
-										} );
+												this.res.$body.find( "h1" ).text().should.equal( "Widgets" );
+												this.res.$body.find( "h1 a" ).attr( "href" ).should.equal( this.config.appUrl );
 
-										it( "it has a textarea with the updated item content", function() {
+											} );
 
-											this.res.$body.find( "form textarea" ).length.should.equal( 1 );
-											this.res.$body.find( "form textarea" ).val().should.equal( "some updated content" );
+											it( "it has the collection name and link in the h2", function() {
 
-										} );
+												this.res.$body.find( "h2" ).text().should.equal( "collection3" );
+												this.res.$body.find( "h2 a" ).attr( "href" ).should.equal( this.returnedCollectionLocation );
 
-										it( "it has a submit button labelled Update", function() {
+											} );
 
-											this.res.$body.find( "form input:submit" ).val().should.equal( "Update" );
+											it( "it has the item id and self-link in the h3", function() {
+
+												var link = this.res.$body.find( "h3 a" );
+												link.attr( "href" ).should.contain( link.text() );
+
+											} );
+
+											it( "it has a form with a label indicating that this is an update", function() {
+
+												this.res.$body.find( "form" ).length.should.equal( 1 );
+												this.res.$body.find( "form label").eq( 0 ).text().should.contain( "Update" );
+
+											} );
+
+											it( "it has a textarea with the updated item content", function() {
+
+												this.res.$body.find( "form textarea" ).length.should.equal( 1 );
+												this.res.$body.find( "form textarea" ).val().should.equal( "some updated content" );
+
+											} );
+
+											it( "it has a submit button labelled Update", function() {
+
+												this.res.$body.find( "form input:submit" ).val().should.equal( "Update" );
+
+											} );
 
 										} );
 

@@ -2,6 +2,7 @@
 "use strict";
 var express = require( "express" );
 var whiskers = require( "./whiskers" );
+var mimeContent = require( "./mime-content" );
 
 module.exports = {
 
@@ -17,12 +18,15 @@ module.exports = {
 function Factory( config ) {
 
 	return {
+
 		"buildModelCollection" : buildModelCollection,
 		"buildCollectionUrl" : buildCollectionUrl,
 		"buildItemUrl" : buildItemUrl,
 		"buildUpsertLocateRequestsUrl" : buildUpsertLocateRequestsUrl,
 		"buildDeleteRequestsUrl" : buildDeleteRequestsUrl,
-		"buildItemUpsertUrl" : buildItemUpsertUrl
+		"buildItemUpsertUrl" : buildItemUpsertUrl,
+		"buildItemEditUrl" : buildItemEditUrl
+
 	};
 
 	function buildModelCollection( collection ) {
@@ -45,12 +49,6 @@ function Factory( config ) {
 
 	}
 
-	function buildItemEditUrl( collectionName, item ) {
-
-		return buildItemUrl( collectionName, item ) + "/edit";
-
-	}
-
 	function buildUpsertLocateRequestsUrl( collectionName ) {
 
 		return buildCollectionUrl( collectionName ) + "/upsertLocateRequests";
@@ -68,37 +66,81 @@ function Factory( config ) {
 
 	}
 
+	function buildItemEditUrl( collectionName, item ) {
+
+		return buildItemUrl( collectionName, item ) + "/edit";
+
+	}
 }
 
-function Engine( config, repo, onComplete ) {
+
+
+function Engine( config, repo, onPreInitialise, onComplete ) {
 
 	var engine = {
 		listen: engineListen,
-		close: engineClose
+		close: engineClose,
+		app: express()
 	};
 
+	if( onPreInitialise ) onPreInitialise( engine );
+
 	var server = null;
-	var app = express();
+	var app = engine.app;
 	var factory = new Factory( config );
 
-	config.pathname = config.pathname || "/";
+	config.pathname = config.pathname || "";
 	if( config.pathname[ 0 ] !== "/" ) config.pathname = "/" + config.pathname;
+	if( config.pathname[ config.pathname.length - 1 ] != "/" ) config.pathname = config.pathname + "/";
 	config.appUrl = config.appUrl || "";
-	while( config.appUrl[ config.appUrl.length ] == "/" )
+	while( config.appUrl[ config.appUrl.length - 1 ] == "/" )
 		config.appUrl = config.appUrl.substring( 0, config.appUrl.length - 1 );
+
+	app.use( function( req, res, next ) {
+
+		req.contented = new mimeContent.Contented( req );
+		next();
+
+	} );
 
 	app.use( express.bodyParser() );
 
-	app.get(	config.pathname,											renderApp			);
-	app.get(	config.pathname + "/:collectionName",						renderCollection	);
-	app.get(	config.pathname + "/:collectionName/:itemId",				renderItem			);
-	app.get(	config.pathname + "/:collectionName/:itemId/item-edits",	renderItemEditor	);
+	app[ "get" ](		config.pathname,											renderApp			);
+	app[ "get" ](		config.pathname.replace( /\/$/, "" ),						renderApp			);
+	app[ "get" ](		config.pathname + ":collectionName",						renderCollection	);
+	app[ "get" ](		config.pathname + ":collectionName/:itemId",				renderItem			);
+	app[ "get" ](		config.pathname + ":collectionName/:itemId/edit",			renderItemEditor	);
 
-	app.post(	config.pathname,											addCollection		);
-	app.post(	config.pathname + "/:collectionName",						addItem				);
-	app.post(	config.pathname + "/:collectionName/upsertLocateRequests",	locateUpsert		);
-	app.post(	config.pathname + "/:collectionName/deleteRequests",		deleteItem			);
-	app.post(	config.pathname + "/:collectionName/:itemId/item-edits",	upsertItem			);
+	app[ "post" ](		config.pathname,											addCollection		);
+	app[ "post" ](		config.pathname.replace( /\/$/, "" ),						addCollection		);
+	app[ "post" ](		config.pathname + ":collectionName",						addItem				);
+	app[ "post" ](		config.pathname + ":collectionName/upsertLocateRequests",	locateUpsert		);
+	app[ "post" ](		config.pathname + ":collectionName/deleteRequests",			deleteItem			);
+	app[ "post" ](		config.pathname + ":collectionName/:itemId/item-edits",		upsertItem			);
+
+	app[ "put" ](		config.pathname + ":collectionName/:itemId",				upsertItem			);
+
+	app[ "delete" ](	config.pathname + ":collectionName/:itemId",				deleteItem			);
+
+	app.use( function( req, res, next ) {
+
+		if( "resourceName" in res && "model" in res ) {
+
+			res.contentType( req.contented.mimeType( res.resourceName ) );
+			var body = whiskers[ req.contented.prefix( res.resourceName ) ]( res.model );
+			res.send( res.statusCode || 200,  body );
+
+		} else if( "statusCode" in res ) {
+
+			res.send( res.statusCode );
+
+		} else {
+
+			next();
+
+		}
+
+	} );
 
 	app.use( function( err, req, res, next ) {
 
@@ -108,7 +150,7 @@ function Engine( config, repo, onComplete ) {
 
 		} else {
 
-			if ( err ) console.log( err );
+			if ( err ) console.log( "ERROR: ", err );
 			return next( err );
 
 		}
@@ -141,7 +183,10 @@ function Engine( config, repo, onComplete ) {
 			var model = { };
 			for( var k in config ) model[ k ] = config[ k ];
 			model.collections = collections.map( factory.buildModelCollection );
-			res.send( whiskers[ "html-app" ]( model ) );
+			if( model.collections.length > 0 ) model.collections[ model.collections.length - 1 ].last = true;
+			res.model = model;
+			res.resourceName = "app";
+			next();
 
 		} );
 
@@ -157,7 +202,9 @@ function Engine( config, repo, onComplete ) {
 			model.url = factory.buildCollectionUrl( model.name );
 			model[ "upsert-item-url" ] = factory.buildUpsertLocateRequestsUrl( model.name );
 			model.items.forEach( function( item ) { item.url = factory.buildItemUrl( model.name, item ); } );
-			res.send( whiskers[ "html-collection" ]( model ) );
+			res.model = model;
+			res.resourceName = "collection";
+			next();
 
 		} );
 
@@ -173,9 +220,12 @@ function Engine( config, repo, onComplete ) {
 			model.collection = { name: req.params.collectionName };
 			model.collection.url = factory.buildCollectionUrl( model.collection.name );
 			model.url = factory.buildItemUrl( model.collection.name, model );
-			model[ "upsert-url" ] = factory.buildItemUpsertUrl( model.collection.name, model );
+// TODO: ensure the templates escape these
+			model[ "edit-url" ] = factory.buildItemEditUrl( model.collection.name, model );
 			model[ "delete-url" ] = factory.buildDeleteRequestsUrl( model.collection.name );
-			res.send( whiskers[ "html-item" ]( model ) );
+			res.model = model;
+			res.resourceName = "item";
+			next();
 
 		} );
 
@@ -194,7 +244,9 @@ function Engine( config, repo, onComplete ) {
 			model[ "upsert-url" ] = factory.buildItemUpsertUrl( model.collection.name, model );
 			model[ "form-description" ] = exists ? "Update item content" : "Create item";
 			model[ "form-submit-action" ] = exists ? "Update" : "Create";
-			res.send( whiskers[ "html-item-editor" ]( model ) );
+			res.model = model;
+			res.resourceName = "item-editor";
+			next();
 
 		} );
 
@@ -206,6 +258,10 @@ function Engine( config, repo, onComplete ) {
 
 		if( !!~contentType.indexOf( "x-www-form-urlencoded" ) )
 			return addCollectionByForm( req, res, next );
+		if( !!~contentType.indexOf( req.contented.mimeType( "collection" ) ) )
+			return addJSONCollection( req, res, next );
+		if( !!~contentType.indexOf( "json" ) )
+			return addJSONCollection( req, res, next );
 
 		return next( new Error( "Not implemented: Handle invalid content type" ) );
 
@@ -221,6 +277,12 @@ function Engine( config, repo, onComplete ) {
 			res.send( 201 );
 
 		} );
+
+	}
+
+	function addJSONCollection( req, res, next ) {
+
+		addCollectionByForm( req, res, next );
 
 	}
 
@@ -252,7 +314,7 @@ function Engine( config, repo, onComplete ) {
 
 	function locateUpsert( req, res ) {
 
-		res.redirect( factory.buildItemUpsertUrl( req.params.collectionName, { id: req.body.itemId } ) );
+		res.redirect( factory.buildItemEditUrl( req.params.collectionName	, { id: req.body.itemId } ) );
 
 	}
 
@@ -267,13 +329,25 @@ function Engine( config, repo, onComplete ) {
 				repo.upsertItem( req.params.collectionName, model, function( err ) {
 
 					if( err ) return next( err );
-					try {
+					if( !req.contented.downgradeProtocol() ) {
 
-						renderItemEditor( req, res );
+						// this is a lower-level client capable of programmatically following links
+						res.setHeader( "location", factory.buildItemUrl( req.params.collectionName, model ) );
+						res.statusCode = exists ? 204 : 201;
+						return next();
 
-					} catch( e ) {
+					} else {
 
-						return next( e );
+						// this is a higher-level "browser" client
+						try {
+
+							return res.redirect( factory.buildItemEditUrl( req.params.collectionName, model ) );
+
+						} catch( e ) {
+
+							return next( e );
+
+						}
 
 					}
 
@@ -289,12 +363,23 @@ function Engine( config, repo, onComplete ) {
 
 	}
 
-	function deleteItem( req, res ) {
+	function deleteItem( req, res, next ) {
 
-		repo.deleteItem( req.params.collectionName, req.body.itemId, function( err ) {
+		var itemId = req.method == "DELETE" ? req.params.itemId : req.body.itemId;
+
+		repo.deleteItem( req.params.collectionName, itemId, function( err ) {
 
 			if( err ) throw err;
-			res.redirect( factory.buildCollectionUrl( req.params.collectionName ) );
+			if( req.contented.downgradeProtocol() ) {
+
+				return res.redirect( factory.buildCollectionUrl( req.params.collectionName ) );
+
+			} else {
+
+				res.statusCode = 204;
+				return next();
+
+			}
 
 		} );
 

@@ -69,30 +69,29 @@ Available media types include:
 ####. . . +json
 
 	{
-		name: "widgets",
-		links: [ {
-			rel: "self",
-			href: "http://store.widgets.nearstate.com/",
-			name: "widgets",
-			type: "application/vnd.hyperset.application+json"
+		"name": "widgets",
+		"links": [ {
+			"rel": "self",
+			"href": "http://store.widgets.nearstate.com/",
+			"name": "widgets",
+			"type": "application/vnd.hyperset.application+json"
 		}, {
-			rel: "add-collection",
-			href: "http://store.widgets.nearstate.com/",
-			name: "Add collection",
-			type: "application/vnd.hyperset.collection+json",
-			method: "POST"
+			"rel": "add-collection",
+			"href": "http://store.widgets.nearstate.com/",
+			"name": "Add collection",
+			"type": "application/vnd.hyperset.collection+json",
+			"verbs": [ "POST" ]
 		}, {
-			rel: "collection",
-			href: "http://store.widgets.nearstate.com/--collectionPath--,
-			name: "--collectionName--,
-			type: "application/vnd.hyperset.collection+json"
+			"rel": "collection",
+			"href": "http://store.widgets.nearstate.com/--collectionPath--,
+			"name": "--collectionName--,
+			"type": "application/vnd.hyperset.collection+json"
 		}, {
-			rel: "collection",
-			href: "http://store.widgets.nearstate.com/--collectionPath--,
-			name: "--collectionName--,
-			type: "application/vnd.hyperset.collection+json"
-		},
-		. . . ]
+			"rel": "collection",
+			"href": "http://store.widgets.nearstate.com/--collectionPath--,
+			"name": "--collectionName--,
+			"type": "application/vnd.hyperset.collection+json"
+		} ]
 	}
 
 ####. . . +xml
@@ -106,7 +105,7 @@ Available media types include:
 | Type | Meaning |
 |------|---------|
 | text/html *or* application/vnd.hyperset.collection+html| HTML page <br/> - one list-item + link per item. <br />- link to the application in the &lt;h1&gt; element<br /> - self-link to collection in the &lt;h2&gt; element <br /> - one form to create a new item in the &lt;form id="add-item" . . .&gt; tag<br /> - one &lt;form&gt; to find the form for adding/updating an item with id in the &lt;form id="locate-upsert-item" . . .&gt;. *NOTE* that submitting this form will result in a redirect to the edit item form (see below) |
-| application/json *or* application/vnd.hyperset.collection+json | JSON representation of the collection.|
+| application/json *or* application/vnd.hyperset.collection+json | JSON representation of the collection. <br /> The <code>upsert-item-template</code> link is a template which must be transformed by the caller, substituting <code>{{itemId}}</code> with the id of the item to insert or update. Upon following this (PUT) link, the caller receives a representation of the item, a 201 (if inserted) or 200 (if updated), plus a <code>location</code> header with a link to the item|
 
 ####. . . +html
 
@@ -140,40 +139,42 @@ Available media types include:
 ####. . . +json
 
 	{
-		name: "--collectionName--",
-		links: [ {
-			rel: "self",
-			href: "http://store.widgets.nearstate.com/--collectionPath--",
-			name: "--collectionName--",
-			type: "application/vnd.hyperset.collection+json",
-			verbs: [ "GET", "DELETE" ]
+		"name": "--collectionName--",
+		"links": [ {
+			"rel": "self",
+			"href": "http://store.widgets.nearstate.com/--collectionPath--",
+			"name": "--collectionName--",
+			"type": "application/vnd.hyperset.collection+json",
+			"verbs": [ "GET", "DELETE" ]
 		}, {
-			rel: "application",
-			href: "http://store.widgets.nearstate.com",
-			name: "widgets",
-			type: "application/vnd.hyperset.application+json"
+			"rel": "application",
+			"href": "http://store.widgets.nearstate.com",
+			"name": "widgets",
+			"type": "application/vnd.hyperset.application+json"
 		}, {
-			rel: "upsert-item-template",
-			href: "http://store.widgets.nearstate.com/{{itemId}}"
-			name: "Add/update item",
-			type: "application/vnd.hyperset.item+json",
-			verbs: [ "PUT" ]
+			"rel": "upsert-item-template",
+			"href": "http://store.widgets.nearstate.com/--collectionPath--/{{itemId}}"
+			"name": "Add/update item",
+			"type": "application/vnd.hyperset.item+json",
+			"verbs": [ "PUT" ]
 		}, {
-			rel: "add-item",
-			href: "http://store.widgets.nearstate.com/--collectionPath--",
-			name: "Add item",
-			type: "application/vnd.hyperset.item+json",
-			verbs: [ "POST" ]
+			"rel": "add-item",
+			"href": "http://store.widgets.nearstate.com/--collectionPath--",
+			"name": "Add item",
+			"type": "application/vnd.hyperset.item+json",
+			"verbs": [ "POST" ]
 		}, {
-			rel: "item",
-			href: "http://store.widgets.nearstate.com/--itemPath--,
-			name: "--itemId--",
-			type: "application/vnd.hyperset.item+json"
+			"rel": "item",
+			"href": "http://store.widgets.nearstate.com/--itemPath--,
+			"name": "--itemId--",
+			"type": "application/vnd.hyperset.item+json",
+			"verbs": [ "GET", "PUT", "DELETE" ]
 		}, {
-			rel: "item",
-			href: "http://store.widgets.nearstate.com/--itemPath--,
-			name: "--itemId--",
-			type: "application/vnd.hyperset.item+json"
+			"rel": "item",
+			"href": "http://store.widgets.nearstate.com/--itemPath--,
+			"name": "--itemId--",
+			"type": "application/vnd.hyperset.item+json",
+			"verbs": [ "GET", "PUT", "DELETE" ]
 		},
 		. . . ]
 	}
@@ -216,21 +217,25 @@ Available media types include:
 ####. . . +json
 
 	{
-		id: "--itemId--",
-		links: [ {
-			rel: "self",
-			href: "http://store.widgets.nearstate.com/--itemPath--",
-			name: "--itemId--",
-			type: "application/vnd.hyperset.item+json",
-			verbs: [ "GET", "PUT", "DELETE" ]
+		"id": "--itemId--",
+		"links": [ {
+			"rel": "self",
+			"href": "http://store.widgets.nearstate.com/--itemPath--",
+			"name": "--itemId--",
+			"type": "application/vnd.hyperset.item+json",
+			"verbs": [ "GET", "PUT", "DELETE" ]
 		}, {
-			rel: "collection",
-			href: "http://store.widgets.nearstate.com/--collectionPath--",
-			name: "--collectionName--",
-			type: "application/vnd.hyperset.collection+json",
-			verbs: [ "GET", "DELETE" ]
-		}
-		. . .],
+			"rel": "collection",
+			"href": "http://store.widgets.nearstate.com/--collectionPath--",
+			"name": "--collectionName--",
+			"type": "application/vnd.hyperset.collection+json",
+			"verbs": [ "GET", "DELETE" ]
+		}, {
+			"rel": "app",
+			"href": "http://store.widgets.nearstate.com",
+			"name": "Widgets",
+			"type": "application/vnd.hyperset.application+json"
+		} ],
 		content: "--itemContent--"
 	}
 

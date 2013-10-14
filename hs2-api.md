@@ -201,13 +201,19 @@ Calling this method *should* set the value of an item for the specified item id,
 #####collectionName
 The unique identifier for the collection.
 #####item
-A JSON object specifying the itemId and contents of the item. The item *will* conform to the following shape:
+A JSON object specifying the itemId and contents of the item. The item *will* conform to one of the two following shapes (the second of which is the same as the first, but omitting the id which will be created by the repository):
 
 	{
 		"id" : "--itemId--",
 		"content" : --itemContent--
 	}
-e.g.
+*or*
+
+	{
+		"content" : --itemContent--
+	}
+	
+For example (following the first shape):
 
 	{
 		"id" : "NS2004",
@@ -218,6 +224,18 @@ e.g.
 			"shank" : "ring"
 		}
 	}
+	
+or (following the second shape):
+
+	{
+		"content" :  {
+			"name" : "2 inch, box head, ring shank",
+			"size" : "2 inch"
+			"head" : "box"
+			"shank" : "ring"
+		}
+	}
+
 ###callback( err, item )
 This callback *must* match the signature and semantics of the callback for **getItem**. It is suggested that this callback *might* be implemented internally by invoking the handler for **getItem** after the persistence of changes is complete. The implementation *should* return an item based which has been retrieved from the persistence store, rather than just returning the input item.
 

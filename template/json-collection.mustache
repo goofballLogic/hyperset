@@ -1,0 +1,49 @@
+{
+    "name" : "{{name}}",
+    "links" : [ {
+
+        "rel" : "self",
+        "href" : "{{{url}}}",
+        "name" : "{{name}}",
+        "type" : "application/vnd.hyperset.collection+json",
+        "verbs" : [ "GET", "DELETE" ]
+
+    }, {
+
+        "rel" : "application",
+        "href" : "{{{app.appUrl}}}",
+        "name" : "{{app.name}}",
+        "type" : "application/vnd.hyperset.application+json"
+
+    }, {
+
+        "rel" : "upsert-item-template",
+{{=<% %>=}}
+        "href" : "<%&url%>/{{itemId}}",
+<%={{ }}=%>
+        "name" : "Add/update item",
+        "type" : "application/vnd.hyperset.item+json",
+        "verbs" : [ "PUT" ]
+
+    }, {
+
+        "rel" : "add-item",
+        "href" : "{{{url}}}",
+        "name" : "Add item",
+        "type" : "application/vnd.hyperset.item+json",
+        "verbs" : [ "POST" ]
+
+{{#items}}
+    }, {
+
+        "rel" : "item",
+        "href" : "{{{url}}}",
+        "name" : "{{id}}",
+        "type" : "application/vnd.hyperset.item+json",
+        "verbs": [ "GET", "PUT", "DELETE" ]
+
+{{/items}}
+    } ]
+
+}
+

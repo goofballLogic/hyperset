@@ -1,0 +1,30 @@
+{
+
+    "id": "{{id}}",
+    "links": [ {
+
+        "rel": "self",
+        "href": "{{{url}}}",
+        "name": "{{id}}",
+        "type": "application/vnd.hyperset.item+json",
+        "verbs": [ "GET", "PUT", "DELETE" ]
+
+    }, {
+
+        "rel": "collection",
+        "href": "{{{collection.url}}}",
+        "name": "{{collection.name}}",
+        "type": "application/vnd.hyperset.collection+json",
+        "verbs": [ "GET", "DELETE" ]
+
+    }, {
+
+        "rel": "app",
+        "href": "{{{app.appUrl}}}",
+        "name": "{{app.name}}",
+        "type": "application/vnd.hyperset.application+json"
+
+    } ],
+    "content": "{{content}}"
+
+}

@@ -73,7 +73,7 @@ function Repo() {
 		var collectionNames = Object.keys( collections );
 		var latch = new Latch( collectionNames.length, function() {
 
-			callback( null, ret );
+			process.nextTick( function() { callback( null, ret ); } );
 
 		} );
 		collectionNames.forEach( function( name ) {
@@ -95,12 +95,16 @@ function Repo() {
 
 	function getCollection( collectionName, callback ) {
 
-		findCollection( collectionName, function( err, collection ) {
+		process.nextTick( function() {
 
-			if( err ) return callback( err );
-			var ret = clone( collection );
-			ret.items = Object.keys( ret.items || { } ).map( function( itemId ) { return { "id" : itemId }; } );
-			callback( null, ret );
+			findCollection( collectionName, function( err, collection ) {
+
+				if( err ) return callback( err );
+				var ret = clone( collection );
+				ret.items = Object.keys( ret.items || { } ).map( function( itemId ) { return { "id" : itemId }; } );
+				process.nextTick( function() { callback( null, ret ); } );
+
+			} );
 
 		} );
 
@@ -108,12 +112,16 @@ function Repo() {
 
 	function getItem( collectionName, itemId, callback ) {
 
-		findCollection( collectionName, function( err, collection ) {
+		process.nextTick( function() {
 
-			if( err ) return callback( IfNotFoundThenConflict( err ) );
-			if( !( itemId in ( collection.items || { } ) ) )
-				return callback( new NotFoundError( "Item does not exist" ) );
-			callback( null, clone( collection.items[ itemId ] ) );
+			findCollection( collectionName, function( err, collection ) {
+
+				if( err ) return callback( IfNotFoundThenConflict( err ) );
+				if( !( itemId in ( collection.items || { } ) ) )
+					return callback( new NotFoundError( "Item does not exist" ) );
+				callback( null, clone( collection.items[ itemId ] ) );
+
+			} );
 
 		} );
 

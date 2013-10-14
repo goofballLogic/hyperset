@@ -1,0 +1,29 @@
+{
+
+    "name": "{{name}}",
+
+    "links": [ {
+
+        "rel": "self",
+        "href": "{{{appUrl}}}",
+        "name": "{{name}}",
+        "type": "application/vnd.hyperset.application+json"
+
+    }, {
+
+        "rel": "add-collection",
+        "href": "{{{appUrl}}}",
+        "name": "Add collection",
+        "type": "application/vnd.hyperset.collection+json",
+        "verbs": [ "POST" ]
+
+    }{{#collections}}, {
+
+        "rel": "collection",
+        "href": "{{{href}}}",
+        "name": "{{name}}",
+        "type": "application/vnd.hyperset.collection+json"
+
+    }{{/collections}} ]
+
+}
