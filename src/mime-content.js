@@ -37,13 +37,15 @@ function Contented( req ) {
 
 		prefix: contentedPrefix,
 		mimeType: contentedMimeType,
-		downgradeProtocol: contentedDowngradeProtocol
+		downgradeProtocol: contentedDowngradeProtocol,
+		protocolType: contentType
 
 	};
 
 	function normalizeMimeType( header ) {
 
 		if( !!~header.indexOf( "html" ) ) return "html";
+		if( !!~header.indexOf( "x-www-form-urlencoded" ) ) return "html";
 		if( !!~header.indexOf( "json" ) ) return "json";
 
 	}

@@ -220,7 +220,6 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 			model.collection = { name: req.params.collectionName };
 			model.collection.url = factory.buildCollectionUrl( model.collection.name );
 			model.url = factory.buildItemUrl( model.collection.name, model );
-// TODO: ensure the templates escape these
 			model[ "edit-url" ] = factory.buildItemEditUrl( model.collection.name, model );
 			model[ "delete-url" ] = factory.buildDeleteRequestsUrl( model.collection.name );
 			res.model = model;
@@ -288,17 +287,24 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 
 	function addItem( req, res, next ) {
 
-		var contentType = req.headers[ "content-type" ] || "";
+		switch( req.contented.protocolType ) {
 
-		if( !!~contentType.indexOf( "x-www-form-urlencoded" ) )
-			return addItemByForm( req, res, next );
+			case "html": return addItemByForm( req, res, next );
+			case "json": return addJSONItem( req.body, req, res, next );
 
-		return next( new Error( "No implemented: Handle invalid content type" ) );
+		}
+		return next( new Error( "Not implemented: Handle invalid content type " + req.contented.protocolType ) );
+
 	}
 
 	function addItemByForm( req, res, next ) {
 
-		var item = { content: req.body.content || null };
+		addJSONItem( { content: req.body.content || null }, req, res, next );
+
+	}
+
+	function addJSONItem( item, req, res, next ) {
+
 		var collectionName = req.params.collectionName;
 
 		repo.upsertItem( collectionName, item, function( err, created ) {
@@ -308,7 +314,6 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 			res.send( 201 );
 
 		} );
-
 
 	}
 

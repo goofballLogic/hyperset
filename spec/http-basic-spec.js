@@ -233,7 +233,6 @@ describe( "Given an app", function() {
 
 							it( "it has the app and collection name in the title", function() {
 
-console.log( this.res.body );
 								var title = this.res.$body.find( "title" ).text();
 								title.should.contain( "Widgets" );
 								title.should.contain( "item" );
@@ -312,7 +311,6 @@ console.log( this.res.body );
 
 									it( "it has the app and collection name in the title", function() {
 
-console.log( this.res.body );
 										var title = this.res.$body.find( "title" ).text();
 										title.should.contain( "Widgets" );
 										title.should.contain( "item" );

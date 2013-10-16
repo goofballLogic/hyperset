@@ -12,6 +12,94 @@ describe( "Given an app and default content type request of application/json", f
 
 	} );
 
+	var itAlso = {
+
+		returnsA200OK: function() {
+
+			it( "returns a 200 OK", function() {
+
+				this.res.statusCode.should.equal( 200 );
+
+			} );
+
+		},
+		returnsA201Created: function() {
+
+			it( "returns a 201 Created", function() {
+
+				this.res.statusCode.should.equal( 201 );
+				this.res.body.should.equal( "Created" );
+
+			} );
+
+		},
+		returnsA204NoContent: function() {
+
+			it( "returns a 204 No Content", function() {
+
+				this.res.statusCode.should.equal( 204 );
+				should.not.exist( this.res.body );
+
+			} );
+
+		},
+		returnsAnItem: function( content ) {
+
+			it( "it returns the item with id", function() {
+
+				if( this.itemId )
+					this.res.json.id.should.equal( this.itemId );
+				else
+					this.res.json.id.length.should.be.gt( 1 );
+
+			} );
+
+			it( "it returns the item with an app link", function() {
+
+				var link = utils.firstLink( this.res.json, "app" );
+				should.exist( link );
+				link.href.should.equal( this.config.appUrl );
+				link.name.should.equal( this.config.name );
+				link.type.should.equal( "application/vnd.hyperset.application+json" );
+
+			} );
+
+			it( "it returns the item with a self link", function() {
+
+				var link = utils.firstLink( this.res.json, "self" );
+				should.exist( link );
+				link.href.should.equal( this.itemURL );
+				link.name.should.equal( this.itemId || this.res.json.id );
+				link.type.should.equal( "application/vnd.hyperset.item+json" );
+				link.verbs.should.contain( "GET" );
+				link.verbs.should.contain( "PUT" );
+				link.verbs.should.contain( "DELETE" );
+				link.verbs.length.should.equal( 3 );
+
+			} );
+
+			it( "it returns the item with a collection link", function() {
+
+				var link = utils.firstLink( this.res.json, "collection" );
+				should.exist( link );
+				link.href.should.equal( this.collectionURL );
+				link.name.should.equal( this.collectionName );
+				link.type.should.equal( "application/vnd.hyperset.collection+json" );
+				link.verbs.should.contain( "GET" );
+				link.verbs.should.contain( "DELETE" );
+				link.verbs.length.should.equal( 2 );
+
+			} );
+
+			it( "it returns the item with the stored content", function() {
+
+				this.res.json.content.should.equal( content );
+
+			} );
+
+		}
+	};
+
 	describe( "When the entry point is requested", function() {
 
 		beforeEach( function(done) {
@@ -20,11 +108,7 @@ describe( "Given an app and default content type request of application/json", f
 
 		} );
 
-		it( "it returns 200 OK", function() {
-
-			this.res.statusCode.should.equal( 200 );
-
-		} );
+		itAlso.returnsA200OK();
 
 		it( "it returns application/vnd.hyperset.application+json content", function() {
 
@@ -75,11 +159,7 @@ describe( "Given an app and default content type request of application/json", f
 
 			} );
 
-			it( "it returns 200 OK", function() {
-
-				this.res.statusCode.should.equal( 200 );
-
-			} );
+			itAlso.returnsA200OK();
 
 			it( "it includes links to the two collections", function() {
 
@@ -114,11 +194,7 @@ describe( "Given an app and default content type request of application/json", f
 
 				} );
 
-				it( "it returns a 201 Created", function() {
-
-					this.res.statusCode.should.equal( 201 );
-
-				} );
+				itAlso.returnsA201Created();
 
 				it( "it returns a Location for the collection", function() {
 
@@ -130,7 +206,7 @@ describe( "Given an app and default content type request of application/json", f
 
 					beforeEach( function( done ) {
 
-						this.returnedCollectionLocation = this.res.headers["location"];
+						this.collectionURL = this.res.headers["location"];
 						utils.behaviours.request( this, this.config.appUrl, done );
 
 					} );
@@ -140,7 +216,7 @@ describe( "Given an app and default content type request of application/json", f
 						var collectionLinks = utils.findLinks( this.res.json, "collection" );
 						collectionLinks.length.should.equal( 3 );
 						var hrefs = collectionLinks.map( function( item ) { return item.href; } );
-						hrefs.should.contain( this.returnedCollectionLocation );
+						hrefs.should.contain( this.collectionURL );
 
 					} );
 
@@ -150,7 +226,7 @@ describe( "Given an app and default content type request of application/json", f
 
 					beforeEach( function( done ) {
 
-						utils.behaviours.request( this, this.returnedCollectionLocation, done );
+						utils.behaviours.request( this, this.collectionURL, done );
 
 					} );
 
@@ -212,43 +288,54 @@ describe( "Given an app and default content type request of application/json", f
 
 					} );
 
+					describe( "and a new item is POSTed using the add-item link", function() {
+
+						beforeEach( function( done ) {
+
+							var link = utils.firstLink( this.res.json, "add-item" );
+							this.newItem = { "content" : "an added thing" };
+							utils.behaviours.request( this, "POST", this.newItem, link.href, done );
+
+						} );
+
+						itAlso.returnsA201Created();
+
+						describe( "and the URI in the location header is requested", function() {
+
+							beforeEach( function( done ) {
+
+								this.itemURL = this.res.headers[ "location" ];
+								utils.behaviours.request( this, this.res.headers[ "location" ], done );
+
+							} );
+
+							itAlso.returnsAnItem( "an added thing" );
+
+						} );
+
+					} );
+
 					describe( "and a new item is PUT using the upsert-item-template", function() {
 
 						beforeEach( function( done ) {
 
 							var linkTemplate = utils.firstLink( this.res.json, "upsert-item-template" );
-							this.newItemId = Math.random().toString().match( /\.(.*)/ )[ 1 ];
-							this.itemURI = linkTemplate.href.replace( "{{itemId}}", this.newItemId );
-							var newItem = {
-
-								"content" : "a new thing"
-
-							};
-							utils.behaviours.request( this, "PUT", newItem, this.itemURI, done );
+							this.itemId = Math.random().toString().match( /\.(.*)/ )[ 1 ];
+							this.itemURL = linkTemplate.href.replace( "{{itemId}}", this.itemId );
+							var newItem = {	"content" : "a new thing" };
+							utils.behaviours.request( this, "PUT", newItem, this.itemURL, done );
 
 						} );
 
-						it( "it returns a 201 Created", function() {
-
-							this.res.statusCode.should.equal( 201 );
-
-						} );
-
-
-						it( "it returns Created as the body", function() {
-
-							this.res.body.should.equal( "Created" );
-
-						} );
+						itAlso.returnsA201Created();
 
 						it( "it returns a location header matching the PUT URI", function() {
 
-							this.res.headers[ "location" ].should.equal( this.itemURI );
+							this.res.headers[ "location" ].should.equal( this.itemURL );
 
 						} );
 
 						describe( "and the URI in the location header is requested", function() {
-
 
 							beforeEach( function( done ) {
 
@@ -257,61 +344,9 @@ describe( "Given an app and default content type request of application/json", f
 
 							} );
 
-							it( "it returns a 200 OK", function() {
+							itAlso.returnsA200OK();
 
-								this.res.statusCode.should.equal( 200 );
-
-							} );
-
-							it( "it returns the item with id", function() {
-
-								this.res.json.id.should.equal( this.newItemId );
-
-							} );
-
-							it( "it returns the item with a self link", function() {
-
-								var link = utils.firstLink( this.res.json, "self" );
-								should.exist( link );
-								link.href.should.equal( this.itemURI );
-								link.name.should.equal( this.newItemId );
-								link.type.should.equal( "application/vnd.hyperset.item+json" );
-								link.verbs.should.contain( "GET" );
-								link.verbs.should.contain( "PUT" );
-								link.verbs.should.contain( "DELETE" );
-								link.verbs.length.should.equal( 3 );
-
-							} );
-
-							it( "it returns the item with a collection link", function() {
-
-								var link = utils.firstLink( this.res.json, "collection" );
-								should.exist( link );
-								link.href.should.equal( this.returnedCollectionLocation );
-								link.name.should.equal( this.collectionName );
-								link.type.should.equal( "application/vnd.hyperset.collection+json" );
-								link.verbs.should.contain( "GET" );
-								link.verbs.should.contain( "DELETE" );
-								link.verbs.length.should.equal( 2 );
-
-							} );
-
-							it( "it returns the item with an app link", function() {
-
-								var link = utils.firstLink( this.res.json, "app" );
-								should.exist( link );
-								link.href.should.equal( this.config.appUrl );
-								link.name.should.equal( this.config.name );
-								link.type.should.equal( "application/vnd.hyperset.application+json" );
-
-
-							} );
-
-							it( "it returns the item with the stored content", function() {
-
-								this.res.json.content.should.equal( "a new thing" );
-
-							} );
+							itAlso.returnsAnItem( "a new thing" );
 
 						} );
 
@@ -319,16 +354,16 @@ describe( "Given an app and default content type request of application/json", f
 
 							beforeEach( function( done ) {
 
-								utils.behaviours.request( this, this.returnedCollectionLocation, done );
+								utils.behaviours.request( this, this.collectionURL, done );
 
 							} );
 
 							it( "it has a link to the added item", function() {
 
-								var criteria = { "rel" : "item", "name" : this.newItemId };
+								var criteria = { "rel" : "item", "name" : this.itemId };
 								var links = utils.where( this.res.json.links, criteria );
 								links.length.should.equal( 1 );
-								links[ 0 ].href.should.equal( this.itemURI );
+								links[ 0 ].href.should.equal( this.itemURL );
 								links[ 0 ].type.should.equal( "application/vnd.hyperset.item+json" );
 								links[ 0 ].verbs.length.should.equal( 3 );
 								links[ 0 ].verbs.should.contain( "GET" );
@@ -344,35 +379,21 @@ describe( "Given an app and default content type request of application/json", f
 
 							beforeEach( function( done ) {
 
-								utils.behaviours.request( this, "PUT", { "content" : "a modified thing" }, this.itemURI, done );
+								utils.behaviours.request( this, "PUT", { "content" : "a modified thing" }, this.itemURL, done );
 
 							} );
 
-							it( "it returns a 204 No Content", function() {
-
-								this.res.statusCode.should.equal( 204 );
-
-							} );
-
-							it( "it returns no content", function() {
-
-								should.not.exist( this.res.body );
-
-							} );
+							itAlso.returnsA204NoContent();
 
 							describe( "and the URI is requested", function() {
 
 								beforeEach( function( done ) {
 
-									utils.behaviours.request( this, this.itemURI, done );
+									utils.behaviours.request( this, this.itemURL, done );
 
 								} );
 
-								it( "it returns the item with the modified content", function() {
-
-									this.res.json.content.should.equal( "a modified thing" );
-
-								} );
+								itAlso.returnsAnItem( "a modified thing" );
 
 							} );
 
@@ -382,21 +403,17 @@ describe( "Given an app and default content type request of application/json", f
 
 							beforeEach( function( done ) {
 
-								utils.behaviours.request( this, "DELETE", null, this.itemURI, done );
+								utils.behaviours.request( this, "DELETE", null, this.itemURL, done );
 
 							} );
 
-							it( "it returns 204 No Content", function() {
-
-								this.res.statusCode.should.equal( 204 );
-
-							} );
+							itAlso.returnsA204NoContent();
 
 							describe( "and the item is requested again", function() {
 
 								beforeEach( function( done ) {
 
-									utils.behaviours.request( this, this.itemURI, done );
+									utils.behaviours.request( this, this.itemURL, done );
 
 								} );
 
