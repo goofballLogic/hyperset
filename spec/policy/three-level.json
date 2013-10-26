@@ -1,0 +1,76 @@
+{
+
+	"description" : "The three level policy covers an application containing two application collections, and a number of user data collections.",
+	"rules" : [ {
+
+		"name" : "Anyone can read static content",
+		"when" : {
+
+			"collection-name" : "static-content"
+
+		},
+		"then" : {
+
+			"grant-read-only" : true
+
+		}
+
+	}, {
+
+		"name" : "A user should see the add-collection link",
+		"given" : {
+
+			"user-id" : ".*"
+
+		},
+		"when" : {
+
+			"collection-name": null
+
+		},
+		"then" : {
+
+			"grant" : "add-collection"
+
+		}
+
+	}, {
+
+		"name" : "A user can access their own collections",
+		"given" : {
+
+			"user-id" : ".+"
+
+		},
+		"when" : {
+
+			"collection-name" : {
+
+				"user-id-match" : "user-([^-]*)"
+
+			}
+
+		},
+		"then" : {
+
+			"grant" : "*"
+
+		}
+
+	}, {
+
+		"name" : "Admin can access any user's collections",
+		"given" : {
+
+			"roles" : [ "admin" ]
+
+		},
+		"then" : {
+
+			"grant" : "*"
+
+		}
+
+	} ]
+
+}

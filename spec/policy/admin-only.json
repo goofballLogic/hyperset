@@ -1,0 +1,19 @@
+{
+
+	"rules" : [{
+
+		"name" : "for any item or collection, given the admin role, grant all permissions",
+		"given" : {
+
+			"roles" : [ "admin" ]
+
+		},
+		"then" : {
+
+			"grant" : "*"
+
+		}
+
+	}]
+
+}

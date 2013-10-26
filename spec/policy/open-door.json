@@ -1,0 +1,14 @@
+{
+
+	"rules" : [ {
+
+		"name" : "for any item or collection, grant all permissions",
+		"then" : {
+
+			"grant" : "*"
+
+		}
+
+	} ]
+
+}

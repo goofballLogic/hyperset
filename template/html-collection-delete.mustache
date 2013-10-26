@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>{{app.name}} {{name}} collection</title>
+	</head>
+	<body>
+		<h1><a href="{{app.appUrl}}">{{app.name}}</a></h1>
+		<h2>Delete {{name}}</h2>
+		<form id="delete-collection" action="{{url}}" method="POST">
+			<div>Please confirm that you wish to delete this collection</div>
+			<input type="submit" value="Delete" />
+		</form>
+	</body>
+</html>
