@@ -7,7 +7,7 @@
         "href": "{{{url}}}",
         "name": "{{id}}",
         "type": "application/vnd.hyperset.item+json",
-        "verbs": [ "GET", "PUT", "DELETE" ]
+        "verbs": {{{ verbs }}}
 
     }, {
 
@@ -15,7 +15,7 @@
         "href": "{{{collection.url}}}",
         "name": "{{collection.name}}",
         "type": "application/vnd.hyperset.collection+json",
-        "verbs": [ "GET", "DELETE" ]
+        "verbs": {{{ collection-verbs }}}
 
     }, {
 

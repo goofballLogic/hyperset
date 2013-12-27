@@ -1,17 +1,21 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>{{app.name}} {{itemId}} item</title>
+        <title>{{app.name}} {{id}} item</title>
     </head>
     <body>
         <h1><a href="{{app.appUrl}}">{{app.name}}</a></h1>
         <h2><a href="{{collection.url}}">{{collection.name}}</a></h2>
         <h3><a href="{{url}}">{{id}}</a></h3>
         <div id="content">{{content}}</div>
+{{#permissions.upsertItem}}
         <a href="{{edit-url}}">Edit</a>
+{{/permissions.upsertItem}}
+{{#permissions.deleteItem}}
         <form method="POST" action="{{delete-url}}">
             <input type="hidden" value="{{id}}" name="itemId" />
             <input type="submit" value="Delete" />
         </form>
+{{/permissions.deleteItem}}
     </body>
 </html>

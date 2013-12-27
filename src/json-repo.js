@@ -20,6 +20,7 @@
 			"getItemOrTemplate" : getItemOrTemplate,
 			"upsertItem" : upsertItem,
 			"addCollection" : addCollection,
+			"deleteCollection" : deleteCollection,
 			"deleteItem" : deleteItem
 
 		};
@@ -27,6 +28,7 @@
 		function getCollections( callback ) {
 
 			ensureRepoFolder( function( err ) {
+
 				if( err ) return callback( err );
 				fs.readdir( repoDir, function( err, files ) {
 
@@ -172,6 +174,38 @@
 				if( err ) return callback( err );
 				var filePath = itemPath( collectionName, itemId );
 				fs.unlink( filePath, callback );
+
+			} );
+
+		}
+
+		// recursive rmdir
+		function recursiveRmDir(dirPath) {
+
+			var files;
+			try { files = fs.readdirSync(dirPath); }
+			catch(e) { return; }
+			if (files.length > 0)
+				for (var i = 0; i < files.length; i++) {
+
+					var filePath = dirPath + '/' + files[i];
+					if (fs.statSync(filePath).isFile())
+						fs.unlinkSync(filePath);
+					else
+						recursiveRmDir(filePath);
+
+				}
+			fs.rmdirSync(dirPath);
+
+		}
+
+		function deleteCollection( collectionName, callback ) {
+
+			ensureRepoFolder( function( err ) {
+
+				if( err ) return callback( err );
+				recursiveRmDir( repoDir + "/" + collectionName );
+				callback();
 
 			} );
 

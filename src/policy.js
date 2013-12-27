@@ -61,7 +61,7 @@ var fs = require( "fs" );
 
 		} else {
 
-			return next( new Error( "No policy configured" ) );
+			throw new Error( "No policy configured" );
 
 		}
 

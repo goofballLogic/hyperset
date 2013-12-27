@@ -32,7 +32,8 @@ var http = require( "http" );
 			} );
 			profileReq.on( "error", function( e ) {
 
-				console.log( e.stack );
+				console.log( new Error( "Error caught calling profile service (see below)").stack );
+				console.log( "Caught:", e.stack, "\n" );
 				res.send( 500 );
 
 			} );

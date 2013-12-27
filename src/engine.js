@@ -3,6 +3,8 @@
 var express = require( "express" );
 var whiskers = require( "./whiskers" );
 var mimeContent = require( "./mime-content" );
+var policy = require( "./policy" );
+var profile = require( "./profile" );
 
 module.exports = {
 
@@ -14,66 +16,6 @@ module.exports = {
 	}
 
 };
-
-function Factory( config ) {
-
-	return {
-
-		"buildModelCollection" : buildModelCollection,
-		"buildCollectionUrl" : buildCollectionUrl,
-		"buildItemUrl" : buildItemUrl,
-		"buildUpsertLocateRequestsUrl" : buildUpsertLocateRequestsUrl,
-		"buildDeleteRequestsUrl" : buildDeleteRequestsUrl,
-		"buildItemUpsertUrl" : buildItemUpsertUrl,
-		"buildItemEditUrl" : buildItemEditUrl
-
-	};
-
-	function buildModelCollection( collection ) {
-
-		var ret = JSON.parse( JSON.stringify( collection ));
-		ret.href = buildCollectionUrl( ret.name );
-		return ret;
-
-	}
-
-	function buildCollectionUrl( collectionName ) {
-
-		return config.appUrl + "/" + collectionName;
-
-	}
-
-	function buildItemUrl( collectionName, item ) {
-
-		return buildCollectionUrl( collectionName ) + "/" + item.id;
-
-	}
-
-	function buildUpsertLocateRequestsUrl( collectionName ) {
-
-		return buildCollectionUrl( collectionName ) + "/upsertLocateRequests";
-
-	}
-
-	function buildDeleteRequestsUrl( collectionName ) {
-
-		return buildCollectionUrl( collectionName ) + "/deleteRequests";
-	}
-
-	function buildItemUpsertUrl( collectionName, item ) {
-
-		return buildItemUrl( collectionName, item ) + "/item-edits";
-
-	}
-
-	function buildItemEditUrl( collectionName, item ) {
-
-		return buildItemUrl( collectionName, item ) + "/edit";
-
-	}
-}
-
-
 
 function Engine( config, repo, onPreInitialise, onComplete ) {
 
@@ -104,56 +46,36 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 	} );
 
 	app.use( express.bodyParser() );
+	profile.attach( app, config );
+	policy.attach( app, config );
 
-	app[ "get" ](		config.pathname,											renderApp			);
-	app[ "get" ](		config.pathname.replace( /\/$/, "" ),						renderApp			);
-	app[ "get" ](		config.pathname + ":collectionName",						renderCollection	);
-	app[ "get" ](		config.pathname + ":collectionName/:itemId",				renderItem			);
-	app[ "get" ](		config.pathname + ":collectionName/:itemId/edit",			renderItemEditor	);
+	app[ "get" ](		config.pathname,											renderApp					);
+	app[ "get" ](		config.pathname.replace( /\/$/, "" ),						renderApp					);
+	app[ "get" ](		config.pathname + ":collectionName",						renderCollection			);
+	app[ "get" ](		config.pathname + ":collectionName/delete",					renderCollectionDelete		);
+	app[ "get" ](		config.pathname + ":collectionName/:itemId/edit",			renderItemEdit				);
+	app[ "get" ](		config.pathname + ":collectionName/:itemId",				renderItem					);
 
-	app[ "post" ](		config.pathname,											addCollection		);
-	app[ "post" ](		config.pathname.replace( /\/$/, "" ),						addCollection		);
-	app[ "post" ](		config.pathname + ":collectionName",						addItem				);
-	app[ "post" ](		config.pathname + ":collectionName/upsertLocateRequests",	locateUpsert		);
-	app[ "post" ](		config.pathname + ":collectionName/deleteRequests",			deleteItem			);
-	app[ "post" ](		config.pathname + ":collectionName/:itemId/item-edits",		upsertItem			);
+	app[ "post" ](		config.pathname,											addCollection				);
+	app[ "post" ](		config.pathname.replace( /\/$/, "" ),						addCollection				);
+	app[ "post" ](		config.pathname + ":collectionName",						addItem						);
+	app[ "post" ](		config.pathname + ":collectionName/delete/requests",		deleteCollection			);
+	app[ "post" ](		config.pathname + ":collectionName/upsertLocateRequests",	locateUpsert				);
+	app[ "post" ](		config.pathname + ":collectionName/delete-item/requests",	deleteItem					);
+	app[ "post" ](		config.pathname + ":collectionName/:itemId",				upsertItem					);
 
-	app[ "put" ](		config.pathname + ":collectionName/:itemId",				upsertItem			);
+	app[ "put" ](		config.pathname + ":collectionName/:itemId",				upsertItem					);
 
-	app[ "delete" ](	config.pathname + ":collectionName/:itemId",				deleteItem			);
-
-	app.use( function( req, res, next ) {
-
-		if( "resourceName" in res && "model" in res ) {
-
-			res.contentType( req.contented.mimeType( res.resourceName ) );
-			var body = whiskers[ req.contented.prefix( res.resourceName ) ]( res.model );
-			res.send( res.statusCode || 200,  body );
-
-		} else if( "statusCode" in res ) {
-
-			res.send( res.statusCode );
-
-		} else {
-
-			next();
-
-		}
-
-	} );
+	app[ "delete" ](	config.pathname + ":collectionName",						deleteCollection			);
+	app[ "delete" ](	config.pathname + ":collectionName/:itemId",				deleteItem					);
 
 	app.use( function( err, req, res, next ) {
 
-		if( err.code && !!~[ 404, 409 ].indexOf( err.code ) ) {
+		if( err.code && !!~[ 404, 409 ].indexOf( err.code ) )
+			return res.send( err.code, err.message );
 
-			res.send( err.code, err.message );
-
-		} else {
-
-			if ( err ) console.log( "ERROR: ", err );
+		if ( err ) console.log( "ERROR: ", err );
 			return next( err );
-
-		}
 
 	} );
 
@@ -161,9 +83,30 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 
 	return engine;
 
-	function engineListen() {
+	function Factory( config ) {
 
-		server = app.listen( config.port );
+		var _ = this;
+		this.buildModelCollection = function( collection ) {
+
+			var ret = JSON.parse( JSON.stringify( collection ));
+			ret.href = _.buildCollectionUrl( ret.name );
+			return ret;
+
+		};
+		this.buildCollectionUrl = function( collectionName ) { return config.appUrl + "/" + collectionName; };
+		this.buildItemUrl = function( collectionName, item ) { return _.buildCollectionUrl( collectionName ) + "/" + item.id; };
+		this.buildUpsertLocateRequestsUrl = function( collectionName ) { return _.buildCollectionUrl( collectionName ) + "/upsertLocateRequests"; };
+		this.buildDeleteItemRequestsUrl = function( collectionName ) { return _.buildCollectionUrl( collectionName ) + "/delete-item/requests"; };
+		this.buildDeleteCollectionStateUrl = function( collectionName ) { return _.buildCollectionUrl( collectionName ) + "/delete"; };
+		this.buildDeleteCollectionRequestsUrl = function( collectionName ) { return _.buildCollectionUrl( collectionName) + "/delete/requests"; };
+		this.buildItemEditUrl = function( collectionName, item ) { return _.buildItemUrl( collectionName, item ) + "/edit"; };
+
+	}
+
+	function engineListen( done ) {
+
+		done = done || function() { };
+		server = app.listen( config.port, done );
 		return engine;
 
 	}
@@ -175,18 +118,47 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 
 	}
 
+	function sendResponse( req, res, next ) {
+
+		if( "resourceName" in res && "model" in res ) {
+
+			res.contentType( req.contented.mimeType( res.resourceName ) );
+			var body = whiskers[ req.contented.prefix( res.resourceName ) ]( res.model );
+			return res.send( res.statusCode || 200,  body );
+
+		}
+
+		if( res.sendEmpty )
+			return res.send( res.statusCode );
+
+		return next();
+
+	}
+
 	function renderApp( req, res, next ) {
 
+		var entitlements = req.entitlementContext( req );
+		var model = { permissions: { } };
+		for( var k in config ) model[ k ] = config[ k ];
+		// expose entitlement: addCollection
+		model.permissions.addCollection = entitlements.check( policy.entitlements.addCollection );
+		// expose entitlement: listCollections
+		model.permissions.listCollections = entitlements.check( policy.entitlements.listCollections );
+		res.model = model;
+		res.resourceName = "app";
+		// require entitlement: listCollections
+		if( !model.permissions.listCollections ) {
+
+			model.collections = [ ];
+			return sendResponse( req, res, next );
+
+		}
 		repo.getCollections( function( err, collections ) {
 
 			if( err ) return next( err );
-			var model = { };
-			for( var k in config ) model[ k ] = config[ k ];
 			model.collections = collections.map( factory.buildModelCollection );
 			if( model.collections.length > 0 ) model.collections[ model.collections.length - 1 ].last = true;
-			res.model = model;
-			res.resourceName = "app";
-			next();
+			return sendResponse( req, res, next );
 
 		} );
 
@@ -194,17 +166,71 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 
 	function renderCollection( req, res, next ) {
 
+		var entitlements = req.entitlementContext( req, req.params.collectionName );
+		// require entitlement: viewCollection
+		if( !entitlements.check( policy.entitlements.viewCollection ) ) return res.send( 403 );
+// TODO: do not query for items if there is no permission to view them
+		repo.getCollection( req.params.collectionName, function( err, model ) {
+
+			if( err ) return next( err );
+			// expose entitlements: upsertItem, deleteCollection, listItems, addItem
+			model.permissions = {
+
+				upsertItem: entitlements.check( policy.entitlements.upsertItem ),
+				deleteCollection: entitlements.check( policy.entitlements.deleteCollection ),
+				listItems: entitlements.check( policy.entitlements.listItems ),
+				addItem: entitlements.check( policy.entitlements.addItem )
+
+			};
+			model.app = { };
+			for( var k in config ) model.app[ k ] = config[ k ];
+			model.url = factory.buildCollectionUrl( model.name );
+			model[ "upsert-item-url" ] = factory.buildUpsertLocateRequestsUrl( model.name );
+			model[ "delete-collection-url"] = factory.buildDeleteCollectionStateUrl( model.name );
+			// require entitlement: listItems
+			if( !model.permissions.listItems )
+			{
+
+				model.items = [];
+
+			} else {
+
+				model.items.forEach( function( item ) {
+
+					var itemEntitlements = req.entitlementContext( req, req.params.collectionName, item.id );
+					item.url = factory.buildItemUrl( model.name, item );
+					var verbs = [ ];
+					// expose entitlements: viewItem, upsertItem, deleteItem
+					if( itemEntitlements.check( policy.entitlements.viewItem ) ) verbs.push( "GET" );
+					if( itemEntitlements.check( policy.entitlements.upsertItem ) ) verbs.push( "PUT" );
+					if( itemEntitlements.check( policy.entitlements.deleteItem ) ) verbs.push( "DELETE" );
+					item.verbs = JSON.stringify( verbs );
+
+				} );
+
+			}
+			res.model = model;
+			res.resourceName = "collection";
+			return sendResponse( req, res, next );
+
+		} );
+
+	}
+
+	function renderCollectionDelete( req, res, next ) {
+
+		var entitlements = req.entitlementContext( req, req.params.collectionName );
+		// require entitlement: deleteCollection
+		if( !entitlements.check( policy.entitlements.deleteCollection ) ) return res.send( 403 );
 		repo.getCollection( req.params.collectionName, function( err, model ) {
 
 			if( err ) return next( err );
 			model.app = { };
 			for( var k in config ) model.app[ k ] = config[ k ];
-			model.url = factory.buildCollectionUrl( model.name );
-			model[ "upsert-item-url" ] = factory.buildUpsertLocateRequestsUrl( model.name );
-			model.items.forEach( function( item ) { item.url = factory.buildItemUrl( model.name, item ); } );
+			model.url = factory.buildDeleteCollectionRequestsUrl( model.name );
 			res.model = model;
-			res.resourceName = "collection";
-			next();
+			res.resourceName = "collection-delete";
+			return sendResponse( req, res, next);
 
 		} );
 
@@ -212,25 +238,71 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 
 	function renderItem( req, res, next ) {
 
+		// TODO: check if this is necessary - if( req.params.itemId == "deleteRequests" ) return next();
+		var entitlements = req.entitlementContext( req, req.params.collectionName, req.params.itemId );
+		// require entitlement: viewItem
+		if( !entitlements.check( policy.entitlements.viewItem ) ) return res.send( 403 );
 		repo.getItem( req.params.collectionName, req.params.itemId, function( err, model ) {
 
 			if( err ) return next( err );
+			/*** main model ***/
 			model.app = { };
 			for( var k in config ) model.app[ k ] = config[ k ];
 			model.collection = { name: req.params.collectionName };
 			model.collection.url = factory.buildCollectionUrl( model.collection.name );
 			model.url = factory.buildItemUrl( model.collection.name, model );
 			model[ "edit-url" ] = factory.buildItemEditUrl( model.collection.name, model );
-			model[ "delete-url" ] = factory.buildDeleteRequestsUrl( model.collection.name );
+			model[ "delete-url" ] = factory.buildDeleteItemRequestsUrl( model.collection.name );
+
+			/*** model.verbs ***/
+			// expose entitlements: viewItem, upsertItem, deleteItem
+			var verbs = determineVerbs( entitlements, {
+
+				"GET" : policy.entitlements.viewItem ,
+				"PUT" : policy.entitlements.upsertItem,
+				"DELETE" : policy.entitlements.deleteItem
+
+			} );
+			model[ "verbs" ] = JSON.stringify( verbs );
+			/*** model.collection-verbs ***/
+			// expose entitlements: viewCollection, deleteCollection
+			var collectionEntitlements = req.entitlementContext( req, req.params.collectionName );
+			var collectionVerbs = determineVerbs( collectionEntitlements, {
+
+				"GET" : policy.entitlements.viewCollection,
+				"DELETE" : policy.entitlements.deleteCollection
+
+			});
+			model[ "collection-verbs" ] = JSON.stringify( collectionVerbs );
+			/*** model.permissions ***/
+			model.permissions = {
+
+				upsertItem: !!~verbs.indexOf( "PUT" ),
+				deleteItem: !!~verbs.indexOf( "DELETE" ),
+				viewItem: !!~verbs.indexOf( "GET" )
+
+			};
 			res.model = model;
 			res.resourceName = "item";
-			next();
+			return sendResponse( req, res, next );
 
 		} );
 
 	}
 
-	function renderItemEditor( req, res, next ) {
+	function determineVerbs( entitlementContext, verbEntitlementDictionary ) {
+
+		var ret = [];
+		for(var verb in verbEntitlementDictionary) {
+
+			if( entitlementContext.check( verbEntitlementDictionary[verb] ) ) ret.push( verb );
+
+		}
+		return ret;
+
+	}
+
+	function renderItemEdit( req, res, next ) {
 
 		repo.getItemOrTemplate( req.params.collectionName, req.params.itemId, function( err, model, exists ) {
 
@@ -240,12 +312,12 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 			model.collection = { name: req.params.collectionName };
 			model.collection.url = factory.buildCollectionUrl( model.collection.name );
 			model.url = factory.buildItemUrl( model.collection.name, model );
-			model[ "upsert-url" ] = factory.buildItemUpsertUrl( model.collection.name, model );
+			model[ "upsert-url" ] = factory.buildItemUrl( model.collection.name, model );
 			model[ "form-description" ] = exists ? "Update item content" : "Create item";
 			model[ "form-submit-action" ] = exists ? "Update" : "Create";
 			res.model = model;
 			res.resourceName = "item-editor";
-			next();
+			return sendResponse( req, res, next );
 
 		} );
 
@@ -253,29 +325,15 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 
 	function addCollection( req, res, next ) {
 
+		// add-collection entitlement required within the addCollectionByForm function
 		var contentType = req.headers[ "content-type" ] || "";
-
 		if( !!~contentType.indexOf( "x-www-form-urlencoded" ) )
 			return addCollectionByForm( req, res, next );
 		if( !!~contentType.indexOf( req.contented.mimeType( "collection" ) ) )
 			return addJSONCollection( req, res, next );
 		if( !!~contentType.indexOf( "json" ) )
 			return addJSONCollection( req, res, next );
-
 		return next( new Error( "Not implemented: Handle invalid content type" ) );
-
-	}
-
-	function addCollectionByForm( req, res, next ) {
-
-		var collectionName = req.body.collectionName;
-		repo.addCollection( collectionName, function( err ) {
-
-			if( err ) return next( err );
-			res.setHeader( "location", factory.buildCollectionUrl( collectionName ) );
-			res.send( 201 );
-
-		} );
 
 	}
 
@@ -285,8 +343,29 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 
 	}
 
+	function addCollectionByForm( req, res, next ) {
+
+		var collectionName = req.body.collectionName;
+		var entitlements = req.entitlementContext( req, collectionName );
+		// require entitlement: add-collection
+		if( !entitlements.check( policy.entitlements.addCollection ) ) return res.send( 403 );
+		repo.addCollection( collectionName, function( err ) {
+
+			if( err ) return next( err );
+			res.setHeader( "location", factory.buildCollectionUrl( collectionName ) );
+			res.statusCode = 201;
+			res.sendEmpty = true;
+			return sendResponse( req, res, next );
+
+		} );
+
+	}
+
 	function addItem( req, res, next ) {
 
+		var entitlements = req.entitlementContext( req, req.params.collectionName );
+		// require entitlement: add-item
+		if( !entitlements.check( policy.entitlements.addItem ) ) return res.send( 403 );
 		switch( req.contented.protocolType ) {
 
 			case "html": return addItemByForm( req, res, next );
@@ -306,12 +385,13 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 	function addJSONItem( item, req, res, next ) {
 
 		var collectionName = req.params.collectionName;
-
 		repo.upsertItem( collectionName, item, function( err, created ) {
 
 			if( err ) return next( err );
 			res.setHeader( "location", factory.buildItemUrl( collectionName, created ) );
-			res.send( 201 );
+			res.sendEmpty = true;
+			res.statusCode = 201;
+			return sendResponse( req, res, next );
 
 		} );
 
@@ -319,12 +399,18 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 
 	function locateUpsert( req, res ) {
 
-		res.redirect( factory.buildItemEditUrl( req.params.collectionName	, { id: req.body.itemId } ) );
+		var entitlements = req.entitlementContext( req, req.params.collectionName, req.body.itemId );
+		// require entitlement: delete-item
+		if( !entitlements.check( policy.entitlements.deleteItem ) ) return res.send( 403 );
+		res.redirect( factory.buildItemEditUrl( req.params.collectionName, { id: req.body.itemId } ) );
 
 	}
 
 	function upsertItem( req, res, next ) {
 
+		var entitlements = req.entitlementContext( req, req.params.collectionName, req.params.itemId );
+		// require entitlement: upsertItem
+		if( !entitlements.check( policy.entitlements.upsertItem ) ) return res.send( 403 );
 		repo.getItemOrTemplate( req.params.collectionName, req.params.itemId, function( err, model, exists ) {
 
 			if( err ) return next( err );
@@ -339,7 +425,8 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 						// this is a lower-level client capable of programmatically following links
 						res.setHeader( "location", factory.buildItemUrl( req.params.collectionName, model ) );
 						res.statusCode = exists ? 204 : 201;
-						return next();
+						res.sendEmpty = true;
+						return sendResponse( req, res, next );
 
 					} else {
 
@@ -368,23 +455,40 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 
 	}
 
+	function deleteCollection( req, res, next ) {
+
+		var entitlements = req.entitlementContext( req, req.params.collectionName );
+		// require entitlement: delete-collection
+		if( !entitlements.check( policy.entitlements.deleteCollection ) ) return res.send( 403 );
+		repo.deleteCollection( req.params.collectionName, function( err ) {
+
+			if( err ) throw err;
+			if( req.contented.downgradeProtocol() )
+				return res.redirect( config.appUrl );
+
+			res.statusCode = 204;
+			res.sendEmpty = true;
+			return sendResponse( req, res, next );
+
+		} );
+
+	}
+
 	function deleteItem( req, res, next ) {
 
 		var itemId = req.method == "DELETE" ? req.params.itemId : req.body.itemId;
-
+		var entitlements = req.entitlementContext( req, req.params.collectionName, itemId );
+		// require entitlement: delete-item
+		if( !entitlements.check( policy.entitlements.deleteItem ) ) return res.send( 403 );
 		repo.deleteItem( req.params.collectionName, itemId, function( err ) {
 
 			if( err ) throw err;
-			if( req.contented.downgradeProtocol() ) {
-
+			if( req.contented.downgradeProtocol() )
 				return res.redirect( factory.buildCollectionUrl( req.params.collectionName ) );
 
-			} else {
-
-				res.statusCode = 204;
-				return next();
-
-			}
+			res.statusCode = 204;
+			res.sendEmpty = true;
+			return sendResponse( req, res, next );
 
 		} );
 

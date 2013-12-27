@@ -23,12 +23,12 @@ var itAlso = {
 		} );
 
 	},
-	returnsA204NoContent: function() {
+	returnsA302Redirect: function() {
 
-		it( "it returns a 204 No Content", function() {
+		it( "it returns a 302 Redirect", function() {
 
-			this.res.statusCode.should.equal( 204 );
-			should.not.exist( this.res.body );
+			this.res.statusCode.should.equal( 302 );
+			should.exist( this.res.headers.location );
 
 		} );
 
@@ -42,38 +42,22 @@ var itAlso = {
 		} );
 
 	},
-	returnsOnlyASelfLink: function() {
+	returnsNo: function( selector, description ) {
 
-		it( "it only returns a self link", function() {
+		description = description || selector + " element";
+		it( "it returns no " + description, function() {
 
-			this.res.json.links.length.should.equal( 1 );
-			this.res.json.links[ 0 ].rel.should.equal( "self" );
-
-		} );
-
-	},
-	returnsOneLink: function( rel, description, verifyLink ) {
-
-		if( typeof description == "function" ) {
-
-			verifyLink = description;
-			description = "with the expected format";
-
-		}
-		it( "it returns a single " + rel + " link" + (verifyLink ? " " + description : ""), function() {
-
-			var links = utils.findLinks( this.res.json, rel );
-			links.length.should.equal( 1 );
-			if( verifyLink ) verifyLink( links[ 0 ] );
+			this.res.$body.find( selector ).length.should.equal( 0 );
 
 		} );
 
 	},
-	returnsNoLink: function( rel ) {
+	returns: function( count, selector, description ) {
 
-		it( "it does not return a " + rel + " link", function() {
+		description = description || "returns " + count + " " + selector + " elements";
+		it( "it " + description, function() {
 
-			utils.findLinks( this.res.json, rel ).length.should.equal( 0 );
+			this.res.$body.find( selector ).length.should.equal( count );
 
 		} );
 
@@ -135,18 +119,48 @@ var when = {
 
 		} );
 
+	},
+	theMatchingLinkIsFollowed: function( selector ) {
+
+		beforeEach( function( done ) {
+
+			var href = this.res.$body.find( selector ).attr( "href" );
+			utils.behaviours.request( this, href, done );
+
+		} );
+
+	},
+	formIsSubmitted: function( selector, values ) {
+
+		beforeEach( function( done ) {
+
+			var currentValues = ("function" === typeof(values)) ? values.call(this) : values;
+			utils.behaviours.submitFormWithValues( this, selector, currentValues, done );
+
+		} );
+
+	},
+	redirectIsFollowed : function() {
+
+
+		beforeEach( function( done ) {
+
+			if( this.res.statusCode !== 302 ) throw new Error("Expected redirect was not found: " + this.res.statusCode );
+			utils.behaviours.request( this, this.res.headers[ "location" ], done );
+
+		} );
+
 	}
 
 };
 
-describe( "Given an app configured for JSON", function() {
+describe( "Given an app configured for HTML (by default)", function() {
 
 	beforeEach( function( done ) {
 
 		utils.configureRepo( this );
 		utils.configureWidgets( this );
 		utils.configureWidgetsCollections( this, done );
-		utils.configureForJSON( this );
 
 	} );
 
@@ -164,7 +178,9 @@ describe( "Given an app configured for JSON", function() {
 
 			itAlso.returnsA200OK();
 
-			itAlso.returnsOnlyASelfLink();
+			itAlso.returnsNo( "form" );
+
+			itAlso.returnsNo( "ul" );
 
 		} );
 
@@ -190,9 +206,9 @@ describe( "Given an app configured for JSON", function() {
 
 				when.theEntryPointIsRequested();
 
-				itAlso.returnsA200OK();
+				itAlso.returnsNo( "form" );
 
-				itAlso.returnsOnlyASelfLink();
+				itAlso.returnsNo( "ul" );
 
 			} );
 
@@ -212,7 +228,9 @@ describe( "Given an app configured for JSON", function() {
 
 				itAlso.returnsA200OK();
 
-				itAlso.returnsOneLink( "add-collection" );
+				itAlso.returns( 1, "form" );
+
+				itAlso.returns( 1, "ul" );
 
 			} );
 
@@ -248,7 +266,9 @@ describe( "Given an app configured for JSON", function() {
 
 				itAlso.returnsA200OK();
 
-				itAlso.returnsOnlyASelfLink();
+				itAlso.returnsNo( "form" );
+
+				itAlso.returnsNo( "ul" );
 
 			} );
 
@@ -270,6 +290,7 @@ describe( "Given an app configured for JSON", function() {
 
 		} );
 
+
 		describe( "for user1", function() {
 
 			when.theUserIsUser1();
@@ -280,24 +301,17 @@ describe( "Given an app configured for JSON", function() {
 
 				itAlso.returnsA200OK();
 
-				itAlso.returnsOneLink( "self" );
+				itAlso.returns( 1, "form" );
 
-				itAlso.returnsOneLink( "add-collection" );
-
-				it( "it only returns two links", function() {
-
-					this.res.json.links.length.should.equal( 2 );
-
-				} );
+				itAlso.returnsNo( "ul" );
 
 				describe( "and then she tries to add a collection containing her own id", function() {
 
 					beforeEach( function( done ) {
 
 						this.collectionName = "user-" + this.userProfile1.id + "-newcollection";
-						var addCollectionLink = utils.firstLink( this.res.json, "add-collection" );
 						var payload = { "collectionName" : this.collectionName };
-						utils.behaviours.request( this, "POST", payload, addCollectionLink.href, done );
+						utils.behaviours.submitFormWithValues( this, "form", payload, done );
 
 					} );
 
@@ -305,14 +319,17 @@ describe( "Given an app configured for JSON", function() {
 
 				} );
 
-				describe( "and then she tries to add a collection which doesn't contain her id", function() {
+				describe( "and she tries to add a collection which doesn't contain her id", function() {
 
 					beforeEach( function( done ) {
 
-						this.collectionName = "user-77777-newcollection";
-						var addCollectionLink = utils.firstLink( this.res.json, "add-collection" );
-						var payload = { "collectionName" : this.collectionName };
-						utils.behaviours.request( this, "POST", payload, addCollectionLink.href, done );
+						utils.behaviours.request( this, this.config.appUrl, function( ) {
+
+							this.collectionName = "user-77777-newcollection";
+							var payload = { "collectionName" : this.collectionName };
+							utils.behaviours.submitFormWithValues( this, "form", payload, done );
+
+						}.bind( this ) );
 
 					} );
 
@@ -322,43 +339,36 @@ describe( "Given an app configured for JSON", function() {
 
 			} );
 
+
 			describe( "When static content is requested", function() {
 
 				when.staticContentIsRequested();
 
 				itAlso.returnsA200OK();
 
-				itAlso.returnsNoLink( "add-item" );
+				itAlso.returnsNo( "form" );
 
-				itAlso.returnsNoLink( "upsert-item-template" );
+				itAlso.returnsNo( "a:contains(Delete)", "link to delete the item" );
 
 				describe( "and an item link is followed", function() {
 
 					beforeEach( function( done ) {
 
-						utils.behaviours.request( this, utils.firstLink( this.res.json, "item" ).href, done );
+						this.firstItemLink = this.res.$body.find( "li > a" ).first();
+						var href = this.firstItemLink.attr( "href" );
+						utils.behaviours.request( this, href, done );
 
 					} );
 
 					itAlso.returnsA200OK();
 
-					itAlso.returnsOneLink( "self", "with only a GET verb available", function( link ) {
+					itAlso.returnsNo( "a:contains(Edit)", "edit link" );
 
-						link.verbs.should.eql( [ "GET" ] );
-
-					} );
-
-					itAlso.returnsOneLink( "collection", "with only a GET verb available", function( link ) {
-
-						link.verbs.should.eql( [ "GET" ] );
-
-					} );
+					itAlso.returnsNo( "form" );
 
 				} );
 
 			} );
-
-
 
 			describe( "When her collection is requested", function() {
 
@@ -366,111 +376,134 @@ describe( "Given an app configured for JSON", function() {
 
 				itAlso.returnsA200OK();
 
-				itAlso.returnsOneLink( "item", "with GET, PUT and DELETE verbs", function( link ) {
+				itAlso.returns( 1, "form[id=locate-upsert-item]" );
 
-					link.verbs.should.eql( [ "GET", "PUT", "DELETE" ] );
+				itAlso.returns( 1, "form[id=add-item]" );
 
-				} );
+				itAlso.returns( 1, "a:contains(Delete collection)" );
 
-				itAlso.returnsOneLink( "add-item" );
-
-				itAlso.returnsOneLink( "upsert-item-template" );
+				itAlso.returns( 1, "ul li a" );
 
 				describe( "and the item link is followed", function() {
 
-					beforeEach( function( done ) {
-
-						utils.behaviours.request( this, utils.firstLink( this.res.json, "item" ).href, done );
-
-					} );
+					when.theMatchingLinkIsFollowed( "ul li a" );
 
 					itAlso.returnsA200OK();
 
-					itAlso.returnsOneLink( "self", "with GET, PUT and DELETE verbs", function( link ) {
+					itAlso.returns( 1, "a:contains(Edit)" );
 
-						link.verbs.should.eql( [ "GET", "PUT", "DELETE" ] );
+					itAlso.returns( 1, "form input:submit[value=Delete]" );
 
-					} );
+					describe( "and she tries to submit the delete item form", function() {
 
-				} );
+						when.formIsSubmitted( "form", { } );
 
-				describe( "and she tries to POST a new item using the add-item link", function() {
+						itAlso.returnsA302Redirect();
 
-					beforeEach( function( done ) {
+						describe( "and the redirect back to the collection is followed", function() {
 
-						utils.behaviours.request( this, "POST", { "content" : "well here goes" }, utils.firstLink( this.res.json, "add-item" ).href, done );
+							when.redirectIsFollowed();
 
-					} );
+							itAlso.returnsA200OK();
 
-					itAlso.returnsA201Created();
-
-				} );
-
-				describe( "and she tries to PUT a new representation of the linked resource", function() {
-
-					beforeEach( function( done ) {
-
-						utils.behaviours.request( this, "PUT", { "content" : "a modified thing" }, utils.firstLink( this.res.json, "item").href, done );
-
-					} );
-
-					itAlso.returnsA204NoContent();
-
-				} );
-
-				describe( "and she tries to DELETE the resource", function() {
-
-					beforeEach( function( done ) {
-
-						utils.behaviours.request( this, "DELETE", null, utils.firstLink( this.res.json, "item" ).href, done );
-
-					} );
-
-					itAlso.returnsA204NoContent();
-
-				} );
-
-				describe( "When she tries to DELETE her collection", function() {
-
-					beforeEach( function( done ) {
-
-						utils.behaviours.request( this, "DELETE", null, utils.firstLink( this.res.json, "self" ).href, done );
-
-					} );
-
-					itAlso.returnsA204NoContent();
-
-				} );
-
-				describe( "and another user tries to use the links", function() {
-
-					when.theUserIsUser2();
-
-					beforeEach( function() {
-
-						this.itemLink = utils.firstLink( this.res.json, "item" );
-
-					} );
-
-					describe( "and she tries to POST a new item using the add-item link", function() {
-
-						beforeEach( function( done ) {
-
-							utils.behaviours.request( this, "POST", { "content" : "well here goes" }, utils.firstLink( this.res.json, "add-item" ).href, done );
+							itAlso.returnsNo( "ul li a", "item link" );
 
 						} );
+
+					} );
+
+					describe( "and another user tries to submit the delete item form", function() {
+
+						when.theUserIsUser2();
+
+						when.formIsSubmitted( "form", { } );
 
 						itAlso.returnsA403Forbidden();
 
 					} );
 
-					describe( "When they try to DELETE the collection", function() {
+				} );
 
-						beforeEach( function( done ) {
+				describe( "and she tries to add a new item using the add-item form", function() {
 
-							utils.behaviours.request( this, "DELETE", null, utils.firstLink( this.res.json, "self" ).href, done );
+					when.formIsSubmitted( "form#add-item", { "content" : "well here goes" } );
+
+					itAlso.returnsA201Created();
+
+				} );
+
+				describe( "and she submits the locate-upsert-item form", function() {
+
+					when.formIsSubmitted( "form#locate-upsert-item", function() {
+
+						return { "itemId" : this.res.$body.find("ul li a").text() };
+
+					} );
+
+					describe( "and the redirect is followed", function() {
+
+						when.redirectIsFollowed();
+
+						itAlso.returnsA200OK();
+
+						itAlso.returns( 1, "form input:submit[value=Update]" );
+
+					} );
+
+				} );
+
+
+				describe( "When she tries to DELETE her collection", function() {
+
+					when.theMatchingLinkIsFollowed( "a:contains(Delete)" );
+
+					itAlso.returnsA200OK();
+
+					describe( "and the confirm delete form is submitted", function() {
+
+						when.formIsSubmitted( "form#delete-collection" );
+
+						itAlso.returnsA302Redirect();
+
+						describe( "and the redirect is followed", function() {
+
+							when.redirectIsFollowed();
+
+							itAlso.returnsA200OK();
+
+							itAlso.returnsNo( "ul li a" );
 
 						} );
+
+					} );
+
+					describe( "and another user tries to submit the confirm delete form", function() {
+
+						when.theUserIsUser2();
+
+						when.formIsSubmitted( "form#delete-collection" );
+
+						itAlso.returnsA403Forbidden();
+
+					} );
+
+				} );
+
+				describe( "and another user tries to use the controls", function() {
+
+					when.theUserIsUser2();
+
+					describe( "and she tries to add a new item using the add-item form", function() {
+
+						when.formIsSubmitted( "form#add-item", { "content" : "this shouldn't happen" } );
+
+						itAlso.returnsA403Forbidden();
+
+					} );
+
+					describe( "and she tries to follow the delete collection link", function() {
+
+						when.theMatchingLinkIsFollowed( "a:contains(Delete collection)" );
 
 						itAlso.returnsA403Forbidden();
 
@@ -478,35 +511,15 @@ describe( "Given an app configured for JSON", function() {
 
 					describe( "when they try to GET the linked resource", function() {
 
-						beforeEach( function( done ) {
-
-							utils.behaviours.request( this, this.itemLink.href, done );
-
-						} );
+						when.theMatchingLinkIsFollowed( "ul li a" );
 
 						itAlso.returnsA403Forbidden();
 
 					} );
 
-					describe( "when they try to PUT a new representation of the linked resource", function() {
+					describe( "when they submit the locate upsert item form", function() {
 
-						beforeEach( function( done ) {
-
-							utils.behaviours.request( this, "PUT", { "content" : "a modified thing" }, this.itemLink.href, done );
-
-						} );
-
-						itAlso.returnsA403Forbidden();
-
-					} );
-
-					describe( "when they try to DELETE the linked resource", function() {
-
-						beforeEach( function( done ) {
-
-							utils.behaviours.request( this, "DELETE", null, this.itemLink.href, done );
-
-						} );
+						when.formIsSubmitted( "form#locate-upsert-item", { } );
 
 						itAlso.returnsA403Forbidden();
 

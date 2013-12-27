@@ -282,6 +282,20 @@ var tests = [ {
 
 	}
 
+}, {
+
+	name: "When the collection is deleted, it should no longer exist",
+	test: function( done ) {
+
+		newRepo().deleteCollection( testData.addedCollectionName, function( err ) {
+
+			if( err ) throw err;
+			done();
+
+		} );
+
+	}
+
 } ];
 
 function listCollections( callback ) {
@@ -324,16 +338,6 @@ process.on( "uncaughtException", failStep );
 console.log();
 step();
 
-function failStep( e ) {
-
-	clearTimeout( testTimeout );
-	success = false;
-	e = e || "Test timed out";
-	console.log( "\r[" + red + " FAIL " + reset + "]\n\n" + ( e.stack || e ) + "\n\n" + testFunctionLiteral + "\n\n");
-	step();
-
-}
-
 function step() {
 
 	var currentTest = tests.shift();
@@ -346,13 +350,7 @@ function step() {
 		try {
 
 			testTimeout = setTimeout( failStep, testTimeoutLength );
-			currentTest.test( function() {
-
-				clearTimeout( testTimeout );
-				console.log( "\r[" + green + "  OK  " + reset + "]" );
-				step();
-
-			} );
+			currentTest.test( passStep );
 
 		} catch( e ) {
 
@@ -364,6 +362,24 @@ function step() {
 
 		if( !success ) process.exit( 1 );
 	}
+
+}
+
+function failStep( e ) {
+
+	clearTimeout( testTimeout );
+	success = false;
+	e = e || "Test timed out";
+	console.log( "\r[" + red + " FAIL " + reset + "]\n\n" + ( e.stack || e ) + "\n\n" + testFunctionLiteral + "\n\n");
+	step();
+
+}
+
+function passStep() {
+
+	clearTimeout( testTimeout );
+	console.log( "\r[" + green + "  OK  " + reset + "]" );
+	step();
 
 }
 

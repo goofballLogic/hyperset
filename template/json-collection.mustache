@@ -15,6 +15,7 @@
         "name" : "{{app.name}}",
         "type" : "application/vnd.hyperset.application+json"
 
+{{#permissions.upsertItem}}
     }, {
 
         "rel" : "upsert-item-template",
@@ -32,7 +33,7 @@
         "name" : "Add item",
         "type" : "application/vnd.hyperset.item+json",
         "verbs" : [ "POST" ]
-
+{{/permissions.upsertItem}}
 {{#items}}
     }, {
 
@@ -40,7 +41,7 @@
         "href" : "{{{url}}}",
         "name" : "{{id}}",
         "type" : "application/vnd.hyperset.item+json",
-        "verbs": [ "GET", "PUT", "DELETE" ]
+        "verbs": {{{verbs}}}
 
 {{/items}}
     } ]

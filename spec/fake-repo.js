@@ -30,6 +30,7 @@ function Repo() {
 	this.getItemOrTemplate = getItemOrTemplate;
 	// mutate
 	this.addCollection = addCollection;
+	this.deleteCollection = deleteCollection;
 	this.upsertItem = upsertItem;
 	this.deleteItem = deleteItem;
 
@@ -149,6 +150,18 @@ function Repo() {
 				return callback( new NotFoundError( "Item does not exist") );
 
 			delete collection.items[ itemId ];
+			callback( null );
+
+		} );
+
+	}
+
+	function deleteCollection( collectionName, callback ) {
+
+		findCollection( collectionName, function( err, collection ) {
+
+			if( err ) return callback( IfNotFoundThenConflicy( err ) );
+			delete collections[ collectionName ];
 			callback( null );
 
 		} );

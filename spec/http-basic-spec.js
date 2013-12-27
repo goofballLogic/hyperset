@@ -2,12 +2,36 @@ require( "chai" ).should();
 var utils = require( "./utilities" );
 var cheerio = require( "cheerio" );
 
+
+var itAlso = {
+
+	"returnsA200OK" : function() {
+
+		it( "it returns 200 OK", function() {
+
+			this.res.statusCode.should.equal( 200 );
+
+		} );
+
+	},
+	"returnsA302Redirect" : function() {
+
+		it( "it returns a 302 Redirect", function() {
+
+			this.res.statusCode.should.equal( 302 );
+
+		} );
+	}
+
+};
+
 describe( "Given an app", function() {
 
 	beforeEach( function( ) {
 
 		utils.configureRepo( this );
 		utils.configureWidgets( this );
+		utils.configurePolicy( this, "open-door" );
 
 	} );
 
@@ -19,11 +43,7 @@ describe( "Given an app", function() {
 
 		} );
 
-		it( "it returns 200 OK", function() {
-
-			this.res.statusCode.should.equal( 200 );
-
-		} );
+		itAlso.returnsA200OK();
 
 		it( "it returns html content", function() {
 
@@ -70,11 +90,7 @@ describe( "Given an app", function() {
 
 			} );
 
-			it( "it returns 200 OK", function() {
-
-				this.res.statusCode.should.equal( 200 );
-
-			} );
+			itAlso.returnsA200OK();
 
 			it( "it returns a list of two collections", function() {
 
@@ -124,7 +140,7 @@ describe( "Given an app", function() {
 
 					beforeEach( function( done ) {
 
-						this.returnedCollectionLocation = this.res.headers["location"];
+						this.returnedCollectionLocation = this.res.headers[ "location" ];
 						utils.behaviours.request( this, this.config.appUrl, done );
 
 					} );
@@ -147,11 +163,7 @@ describe( "Given an app", function() {
 
 					} );
 
-					it( "it returns 200 OK", function() {
-
-						this.res.statusCode.should.equal( 200 );
-
-					} );
+					itAlso.returnsA200OK();
 
 					it( "it returns html content", function() {
 
@@ -196,6 +208,13 @@ describe( "Given an app", function() {
 
 					} );
 
+					it( "it has a link to the delete-collection state", function() {
+
+						var link = this.res.$body.find( "a:contains('Delete collection')" );
+						link.length.should.equal( 1 );
+
+					} );
+
 					it( "it has an empty list of items", function() {
 
 						this.res.$body.find( "ul" ).find( "*" ).length.should.equal( 0 );
@@ -225,11 +244,7 @@ describe( "Given an app", function() {
 
 							} );
 
-							it( "it returns 200 OK", function() {
-
-								this.res.statusCode.should.equal( 200 );
-
-							} );
+							itAlso.returnsA200OK();
 
 							it( "it has the app and collection name in the title", function() {
 
@@ -302,12 +317,7 @@ describe( "Given an app", function() {
 
 									} );
 
-									it( "it returns a 200 OK", function() {
-
-										this.res.statusCode.should.equal( 200 );
-
-									} );
-
+									itAlso.returnsA200OK();
 
 									it( "it has the app and collection name in the title", function() {
 
@@ -390,11 +400,8 @@ describe( "Given an app", function() {
 
 							} );
 
-							it( "it returns 200 OK", function() {
+							itAlso.returnsA200OK();
 
-								this.res.statusCode.should.equal( 200 );
-
-							} );
 
 							it( "it returns html content", function() {
 
@@ -480,11 +487,7 @@ describe( "Given an app", function() {
 
 									} );
 
-									it( "it returns a 200 OK", function() {
-
-										this.res.statusCode.should.equal( 200 );
-
-									} );
+									itAlso.returnsA200OK();
 
 									it( "it has the app and collection name in the title", function() {
 
@@ -557,11 +560,7 @@ describe( "Given an app", function() {
 
 											} );
 
-											it( "it returns a 200 OK", function() {
-
-												this.res.statusCode.should.equal( 200 );
-
-											} );
+											itAlso.returnsA200OK();
 
 											it( "it has the app and collection name in the title", function() {
 
@@ -704,6 +703,66 @@ describe( "Given an app", function() {
 
 					} );
 
+					describe( "and the delete-collection link is followed", function() {
+
+						beforeEach( function( done ) {
+
+							utils.behaviours.request( this, this.res.$body.find( "a:contains('Delete collection')" ).attr( "href" ), done );
+
+						} );
+
+						itAlso.returnsA200OK();
+
+						it( "it has delete and the collection name in the h2", function() {
+
+							var h2 = this.res.$body.find( "h2" ).text();
+							h2.should.contain( "collection3" );
+							h2.should.contain( "Delete" );
+
+						} );
+
+						it( "it has a confirmation message and a delete button", function() {
+
+							this.res.$body.find( "form" ).text().should.contain( "confirm that you wish to delete" );
+							this.res.$body.find( "input:submit" ).val().should.equal( "Delete" );
+
+						} );
+
+						describe( "and the delete-collection form is submitted", function() {
+
+							beforeEach( function( done ) {
+
+								utils.behaviours.submitFormWithValues( this, "form#delete-collection", { }, done );
+
+							} );
+
+							itAlso.returnsA302Redirect();
+
+							describe( "and the redirect is followed", function() {
+
+								beforeEach( function( done ) {
+
+									var location = this.res.headers[ "location" ];
+									utils.behaviours.request( this, location, done );
+
+								} );
+
+								itAlso.returnsA200OK();
+
+								it( "it returns a list of three collections including the new collection", function() {
+
+									var items = this.res.$body.find( "ul li" );
+									items.length.should.equal( 2 );
+									items.toString().should.not.contain( this.returnedCollectionLocation );
+
+								} );
+
+							} );
+
+						} );
+
+					} );
+
 				} );
 
 			} );
@@ -714,7 +773,7 @@ describe( "Given an app", function() {
 
 	afterEach( function() {
 
-		this.server.close();
+		utils.dispose( this );
 
 	} );
 

@@ -74,6 +74,8 @@ All repositories must service the following interface. This list of methods is a
 ####for writing
 * addCollection( collectionName, callback )
 	*&nbsp;&nbsp;&harr;&nbsp; ( err )*
+* deleteCollection( collectionName )
+	*&nbsp;&nbsp;&harr;&nbsp; ( err )*
 * upsertItem( collectionName, item, callback )
 	*&nbsp;&nbsp;&harr;&nbsp; ( err, item )*
 * deleteItem( collectionName, itemId, callback )
@@ -196,8 +198,20 @@ If a collection of the same name already exists, a protocol-specific ```Conflict
 
 
 
+##deleteCollection( collectionName, callback )
+This method *should* remove the collection identified by the ```collectionName```. Subsequent calls to e.g. ```getCollection``` *must* return a ```NotFoundError```.
+
+Note that, unlike HTTP, hyperset will only understand the ```NotFoundError``` which has a code of 404. Returning an error with any other code (e.g. 410, a la HTTP's "Gone" status) will be interpreted as an internal error, and hyperset will emit a 500 Internal Server Error in response to its original caller.
+###callback( err )
+#####err
+If the delete succeeds, the implementer should indicate success by invoking the callback with null as the only argument.
+If the collection does not exist, the protocol-specific ```NotFoundError``` *must* be returned.
+
 ##upsertItem( collectionName, item, callback )
 Calling this method *should* set the value of an item for the specified item id, within the specified collection. It can thus be used either to add a new item into a collection, or to replace the value of an existing item. Subsequent calls to e.g. **getItem** using the same ```collectionName``` + ```itemId``` *must* return the specified content.
+
+
+
 #####collectionName
 The unique identifier for the collection.
 #####item

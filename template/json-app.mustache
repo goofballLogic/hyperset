@@ -1,29 +1,41 @@
 {
 
-    "name": "{{name}}",
+	"name": "{{name}}",
 
-    "links": [ {
+	"links": [
 
-        "rel": "self",
-        "href": "{{{appUrl}}}",
-        "name": "{{name}}",
-        "type": "application/vnd.hyperset.application+json"
+		{
 
-    }, {
+			"rel": "self",
+			"href": "{{{appUrl}}}",
+			"name": "{{name}}",
+			"type": "application/vnd.hyperset.application+json"
 
-        "rel": "add-collection",
-        "href": "{{{appUrl}}}",
-        "name": "Add collection",
-        "type": "application/vnd.hyperset.collection+json",
-        "verbs": [ "POST" ]
+		}
 
-    }{{#collections}}, {
+	{{#permissions.addCollection}}
+		, {
 
-        "rel": "collection",
-        "href": "{{{href}}}",
-        "name": "{{name}}",
-        "type": "application/vnd.hyperset.collection+json"
+			"rel": "add-collection",
+			"href": "{{{appUrl}}}",
+			"name": "Add collection",
+			"type": "application/vnd.hyperset.collection+json",
+			"verbs": [ "POST" ]
 
-    }{{/collections}} ]
+		}
+
+	{{/permissions.addCollection}}
+	{{#collections}}
+		, {
+
+			"rel": "collection",
+			"href": "{{{href}}}",
+			"name": "{{name}}",
+			"type": "application/vnd.hyperset.collection+json"
+
+		}
+
+	{{/collections}}
+	]
 
 }

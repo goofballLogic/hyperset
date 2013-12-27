@@ -167,7 +167,7 @@ describe( "Given an app", function() {
 
 	afterEach( function() {
 
-		this.server.close();
+		utils.dispose( this );
 
 	} );
 

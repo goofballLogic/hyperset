@@ -66,6 +66,11 @@ Available media types include:
 		</body>
 	</html>
 
+| Feature                  | Required Entitlement  |
+|--------------------------|-----------------------|
+| *Add collection* form    | add-collection        |
+| List of collections      | list-collections      |
+
 ####. . . +json
 
 	{
@@ -94,6 +99,11 @@ Available media types include:
 		} ]
 	}
 
+| Feature                  | Required Entitlement  |
+|--------------------------|-----------------------|
+| *add-collection* link    | add-collection        |
+| List of collection links | list-collections      |
+
 ####. . . +xml
 
 	TBD
@@ -104,7 +114,7 @@ Available media types include:
 
 | Type | Meaning |
 |------|---------|
-| text/html *or* application/vnd.hyperset.collection+html| HTML page <br/> - one list-item + link per item. <br />- link to the application in the &lt;h1&gt; element<br /> - self-link to collection in the &lt;h2&gt; element <br /> - one form to create a new item in the &lt;form id="add-item" . . .&gt; tag<br /> - one &lt;form&gt; to find the form for adding/updating an item with id in the &lt;form id="locate-upsert-item" . . .&gt;. *NOTE* that submitting this form will result in a redirect to the edit item form (see below) |
+| text/html *or* application/vnd.hyperset.collection+html| HTML page <br/> - one list-item + link per item. <br />- link to the application in the &lt;h1&gt; element<br /> - self-link to collection in the &lt;h2&gt; element <br /> - one form to create a new item in the &lt;form id="add-item" . . .&gt; tag<br /> - one &lt;form&gt; to find the form for adding/updating an item with id in the &lt;form id="locate-upsert-item" . . .&gt;. *NOTE* that submitting this form will result in a redirect to the edit item form (see below) <br /> - link to the *delete collection* state of the application |
 | application/json *or* application/vnd.hyperset.collection+json | JSON representation of the collection. <br /> The <code>upsert-item-template</code> link is a template which must be transformed by the caller, substituting <code>{{itemId}}</code> with the id of the item to insert or update. Upon following this (PUT) link, the caller receives a representation of the item, a 201 (if inserted) or 200 (if updated), plus a <code>location</code> header with a link to the item|
 
 ####. . . +html
@@ -128,6 +138,9 @@ Available media types include:
 				<textarea name="content"></textarea>
 				<input type="submit" value="Add item" />
 			</form>
+			<div>
+				<a href="http://store.widgets.nearstate.com/--deleteCollectionPath--">Delete collection</a>
+			</div>
 			<ul>
 				<li><a href="http://store.widgets.nearstate.com/--itemPath--">--itemId--</a>
 				<li><a href="http://store.widgets.nearstate.com/--itemPath--">--itemId--</a>
@@ -135,7 +148,15 @@ Available media types include:
 			</ul>
 		</body>
 	</html>
-	
+
+| Feature                   | Required Entitlements     |
+|---------------------------|---------------------------|
+| Collection representation | view-collection           |
+| *delete-collection* form  | delete-collection         |
+| *locate-upsert-item* form | upsert-item               |
+| *add-item* form           | add-item                  |
+| List of item links        | list-items                |
+
 ####. . . +json
 
 	{
@@ -179,11 +200,24 @@ Available media types include:
 		. . . ]
 	}
 
+| Feature                       | Required Entitlements     |
+|-------------------------------|---------------------------|
+| Collection representation     | view-collection           |
+| *self* link DELETE verb       | delete-collection         |
+| *upsert-item-template* link   | upsert-item               |
+| *add-item* link               | add-item                  |
+| List of item links            | list-items                |
+| *item* links GET verb         | view-item                 |
+| *item* links PUT verb         | upsert-item               |
+| *item* links DELETE verb      | delete-item               |
+
 ####. . . +xml
 
 	TBD
 	
 ##vnd.hyperset.item . . .
+
+**NOTE:** It is invalid for an item to have an itemId whose value is *deleteRequests* as this is a reserved word in the hypermedia protocol (as the URL ending *--collectionName--/deleteRequests* identifies the delete state of the collection).
 
 Available media types include:
 
@@ -213,7 +247,14 @@ Available media types include:
 			</form>
 		</body>
 	</html>
-	
+
+| Feature                       | Required Entitlements     |
+|-------------------------------|---------------------------|
+| Item representation           | view-item                 |
+| Collection link               | view-collection           |
+| *Edit* link                   | upsert-item               |
+| *Delete* form inks            | delete-item               |
+
 ####. . . +json
 
 	{
@@ -238,6 +279,14 @@ Available media types include:
 		} ],
 		content: "--itemContent--"
 	}
+
+| Feature                       | Required Entitlements     |
+|-------------------------------|---------------------------|
+| Item representation           | view-item                 |
+| *self* link GET verb          | view-item                 |
+| *self* link PUT verb          | upsert-item               |
+| *self* link DELETE verb       | delete-item               |
+| *collection* link             | view-collection           |
 
 ####. . . +xml
 
@@ -269,3 +318,40 @@ Available media types include:
 			</form>
 		</body>
 	</html>
+
+| Feature                       | Required Entitlements     |
+|-------------------------------|---------------------------|
+| Item-editor representation    | upsert-item               |
+| *collection* link               | view-collection         |
+| *Create* or *Update* form     | upsert-item               |
+
+
+
+##vnd.hyperset.collection-delete . . .
+
+Available media types include:
+
+| Type | Meaning |
+|------|---------|
+| text/html *or* application/vnd.hyperset.item-delete+html | HTML page<br />- link to the application in the &lt;h1&gt; element<br />- &lt;form&gt; to confirm deletion of the collection |
+
+###. . . +html
+
+	<!DOCTYPE html>
+	<html>
+		<head>
+			<title>Widgets --collecitonName-- collection - Delete</title>
+		</head>
+		<body>
+			<h1><a href="http://store.widgets.nearstate.com">Widgets</a></h1>
+			<h2>Delete --collectionName--</h2>
+			<form id="delete-collection" action="http://store.widgets.nearstate.com/--deleteCollectionPath--" method="POST">
+				<div>Please confirm that you wish to delete this collection</div>
+				<input type="submit" value="Delete" />
+			</form>
+		</body>
+	</html>
+
+| Feature                          | Required Entitlements     |
+|----------------------------------|---------------------------|
+| Delete-collection representation | delete-collection         |

@@ -9,6 +9,7 @@ describe( "Given an app and default content type request of application/json", f
 		utils.configureRepo( this );
 		utils.configureWidgets( this );
 		utils.configureForJSON( this );
+		utils.configurePolicy( this, "open-door" );
 
 	} );
 
@@ -439,7 +440,7 @@ describe( "Given an app and default content type request of application/json", f
 
 	afterEach( function() {
 
-		this.server.close();
+		utils.dispose( this );
 
 	} );
 
