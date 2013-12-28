@@ -11,7 +11,7 @@ var fs = require( "fs" );
 		viewCollection: "view-collection",
 		listItems: "list-items",
 		viewItem: "view-item",
-		// updates
+		// commands
 		addCollection: "add-collection",
 		deleteCollection: "delete-collection",
 		addItem: "add-item",
@@ -99,10 +99,15 @@ var fs = require( "fs" );
 			var whenStrategies = [ ];
 			if( rule.when ) for( var whenStrategyName in rule.when ) {
 
+				var whenRule = rule.when[ whenStrategyName ];
 				switch( whenStrategyName ) {
 
 					case "collection-name":
-						whenStrategies.push( buildWhenCollectionNameStrategy( rule.when[ whenStrategyName ] ).bind( rule ) );
+						whenStrategies.push( buildWhenCollectionNameStrategy( whenRule ).bind( rule ) );
+						break;
+
+					case "missing-profile-entitlement":
+						whenStrategies.push( buildWhenMissingProfileEntitlementStrategy( whenRule ).bind( rule ) );
 						break;
 
 					default:
@@ -114,14 +119,19 @@ var fs = require( "fs" );
 			var thenStrategies = [ ];
 			if( rule.then ) for( var thenStrategyName in rule.then ) {
 
+				var thenRule = rule.then[ thenStrategyName ];
 				switch( thenStrategyName ) {
 
 					case "grant":
-						thenStrategies.push( buildThenGrantStrategy( rule.then[ thenStrategyName ] ).bind( rule ) );
+						thenStrategies.push( buildThenGrantStrategy( thenRule ).bind( rule ) );
 						break;
 
 					case "grant-read-only":
-						thenStrategies.push( buildThenGrantReadonlyStrategy( rule.then[ thenStrategyName ] ).bind( rule ) );
+						thenStrategies.push( buildThenGrantReadonlyStrategy( thenRule ).bind( rule ) );
+						break;
+
+					case "redirect-access":
+						thenStrategies.push( buildThenRedirectAccessStrategy( thenRule ).bind( rule ) );
 						break;
 
 					default:
@@ -198,6 +208,16 @@ var fs = require( "fs" );
 		return function() { return JSON.parse( readonlyEntitlements ); };
 
 	}
+	function buildThenRedirectAccessStrategy( details ) {
+
+		return function( req ) {
+
+			var message = "[ " + details.code + " ] " + details.message;
+			req.policyInterrupt = { "code": 403, "message" : message };
+
+		};
+
+	}
 	function buildWhenCollectionNameStrategy( pattern ) {
 
 		if( pattern === null ) {
@@ -235,6 +255,43 @@ var fs = require( "fs" );
 
 		}
 		throw new Error( "Unrecognised 'when/collection-name' configuration: " + JSON.stringify( pattern ) );
+
+	}
+	function buildWhenMissingProfileEntitlementStrategy( entitltmentName ) {
+
+		return function( req ) {
+
+			if( !req.userProfile ) return true;
+			if( !req.userProfile.entitlements ) return true;
+			var now = new Date();
+			for(var i in req.userProfile.entitlements) {
+
+				var entitlement = req.userProfile.entitlements[i];
+				if( !( "startDate" in entitlement ) ) continue;
+				if( !( "endDate" in entitlement ) ) continue;
+				try {
+
+					ensureDate( entitlement, "startDate" );
+					ensureDate( entitlement, "endDate" );
+
+				} catch( e ) {
+
+					entitlement[ "startDate" ] = new Date("2222-02-02");
+					entitlement[ "endDate" ] = new Date("1111-01-01");
+
+				}
+				if( entitlement[ "startDate" ] <= now  && entitlement[ "endDate" ] > now ) return false;
+
+			}
+			return true;
+
+		};
+
+	}
+	function ensureDate( obj, propName ) {
+
+		if( obj[ propName ] instanceof Date ) return;
+		obj[ propName ] = new Date( obj[ propName ] );
 
 	}
 	function buildGivenUserIdStrategy( pattern ) {

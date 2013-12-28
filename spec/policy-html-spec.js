@@ -238,6 +238,8 @@ describe( "Given an app configured for HTML (by default)", function() {
 
 	} );
 
+// TODO: roles
+
 	describe( "and the three-level access policy", function() {
 
 		beforeEach( function( done ) {

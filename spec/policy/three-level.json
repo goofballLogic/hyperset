@@ -25,7 +25,7 @@
 		},
 		"when" : {
 
-			"collection-name": null
+			"collection-name" : null
 
 		},
 		"then" : {

@@ -14,15 +14,15 @@ var http = require( "http" );
 		app.use( function( req, res, next ) {
 
 			if( req.userProfile ) return next();
-			var profileReq = http.request( options, function( profileRes ) {
+			var profileRequest = http.request( options, function( profileResponse ) {
 
 				var body = "";
-				profileRes.on( "data", function( data) {
+				profileResponse.on( "data", function( data) {
 
 					body = body + data;
 
 				} );
-				profileRes.on( "end", function() {
+				profileResponse.on( "end", function() {
 
 					req.userProfile = JSON.parse( body );
 					next();
@@ -30,14 +30,14 @@ var http = require( "http" );
 				} );
 
 			} );
-			profileReq.on( "error", function( e ) {
+			profileRequest.on( "error", function( e ) {
 
 				console.log( new Error( "Error caught calling profile service (see below)").stack );
 				console.log( "Caught:", e.stack, "\n" );
 				res.send( 500 );
 
 			} );
-			profileReq.end();
+			profileRequest.end();
 
 		} );
 

@@ -220,6 +220,8 @@ describe( "Given an app configured for JSON", function() {
 
 	} );
 
+// TODO: roles
+
 	describe( "and the three-level access policy", function() {
 
 		beforeEach( function( done ) {
@@ -527,6 +529,8 @@ describe( "Given an app configured for JSON", function() {
 		} );
 
 	} );
+
+// TODO: admin permissions
 
 	afterEach( function() {
 

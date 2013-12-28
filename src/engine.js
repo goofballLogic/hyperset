@@ -48,6 +48,12 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 	app.use( express.bodyParser() );
 	profile.attach( app, config );
 	policy.attach( app, config );
+	app.use( function( req, res, next ) {
+
+		req.entitlementContext( req );
+		next( req.policyInterrupt );
+
+	} );
 
 	app[ "get" ](		config.pathname,											renderApp					);
 	app[ "get" ](		config.pathname.replace( /\/$/, "" ),						renderApp					);
@@ -71,7 +77,7 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 
 	app.use( function( err, req, res, next ) {
 
-		if( err.code && !!~[ 404, 409 ].indexOf( err.code ) )
+		if( err.code && !!~[ 403, 404, 409 ].indexOf( err.code ) )
 			return res.send( err.code, err.message );
 
 		if ( err ) console.log( "ERROR: ", err );
@@ -199,11 +205,14 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 
 					var itemEntitlements = req.entitlementContext( req, req.params.collectionName, item.id );
 					item.url = factory.buildItemUrl( model.name, item );
-					var verbs = [ ];
 					// expose entitlements: viewItem, upsertItem, deleteItem
-					if( itemEntitlements.check( policy.entitlements.viewItem ) ) verbs.push( "GET" );
-					if( itemEntitlements.check( policy.entitlements.upsertItem ) ) verbs.push( "PUT" );
-					if( itemEntitlements.check( policy.entitlements.deleteItem ) ) verbs.push( "DELETE" );
+					var verbs = determineVerbs(itemEntitlements, {
+
+						"GET" : policy.entitlements.viewItem,
+						"PUT" : policy.entitlements.upsertItem,
+						"DELETE" : policy.entitlements.deleteItem
+
+					});
 					item.verbs = JSON.stringify( verbs );
 
 				} );
@@ -238,7 +247,6 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 
 	function renderItem( req, res, next ) {
 
-		// TODO: check if this is necessary - if( req.params.itemId == "deleteRequests" ) return next();
 		var entitlements = req.entitlementContext( req, req.params.collectionName, req.params.itemId );
 		// require entitlement: viewItem
 		if( !entitlements.check( policy.entitlements.viewItem ) ) return res.send( 403 );
@@ -287,18 +295,6 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 			return sendResponse( req, res, next );
 
 		} );
-
-	}
-
-	function determineVerbs( entitlementContext, verbEntitlementDictionary ) {
-
-		var ret = [];
-		for(var verb in verbEntitlementDictionary) {
-
-			if( entitlementContext.check( verbEntitlementDictionary[verb] ) ) ret.push( verb );
-
-		}
-		return ret;
 
 	}
 
@@ -379,21 +375,6 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 	function addItemByForm( req, res, next ) {
 
 		addJSONItem( { content: req.body.content || null }, req, res, next );
-
-	}
-
-	function addJSONItem( item, req, res, next ) {
-
-		var collectionName = req.params.collectionName;
-		repo.upsertItem( collectionName, item, function( err, created ) {
-
-			if( err ) return next( err );
-			res.setHeader( "location", factory.buildItemUrl( collectionName, created ) );
-			res.sendEmpty = true;
-			res.statusCode = 201;
-			return sendResponse( req, res, next );
-
-		} );
 
 	}
 
@@ -488,6 +469,34 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 
 			res.statusCode = 204;
 			res.sendEmpty = true;
+			return sendResponse( req, res, next );
+
+		} );
+
+	}
+
+
+	function determineVerbs( entitlementContext, verbEntitlementDictionary ) {
+
+		var ret = [];
+		for(var verb in verbEntitlementDictionary) {
+
+			if( entitlementContext.check( verbEntitlementDictionary[verb] ) ) ret.push( verb );
+
+		}
+		return ret;
+
+	}
+
+	function addJSONItem( item, req, res, next ) {
+
+		var collectionName = req.params.collectionName;
+		repo.upsertItem( collectionName, item, function( err, created ) {
+
+			if( err ) return next( err );
+			res.setHeader( "location", factory.buildItemUrl( collectionName, created ) );
+			res.sendEmpty = true;
+			res.statusCode = 201;
 			return sendResponse( req, res, next );
 
 		} );

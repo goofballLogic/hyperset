@@ -67,6 +67,19 @@ module.exports = function( grunt ) {
 
 				src: [ "spec/**/policy-*-spec.js"]
 
+			},
+
+			testProfile: {
+
+				options: {
+
+					reporter: "spec",
+					growl: true
+
+				},
+
+				src: [ "spec/**/profile-spec.js" ]
+
 			}
 
 		},

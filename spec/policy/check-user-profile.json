@@ -1,0 +1,25 @@
+{
+
+	"description" : "User policy for checking an active test-app-subscription entitlement",
+	"rules" : [ {
+
+		"name" : "Require an entitlement",
+		"when" : {
+
+			"missing-profile-entitlement" : "test-app-subscription"
+
+		},
+		"then" : {
+
+			"redirect-access" : {
+
+				"code" : 109,
+				"message" : "Your subscription has expired."
+
+			}
+
+		}
+
+	} ]
+
+}
