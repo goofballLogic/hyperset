@@ -88,7 +88,7 @@ var when = {
 
 		beforeEach( function() {
 
-			utils.configureUserProfile( this, this.userProfile1 );
+			utils.configureUserProfile( this, this.editorUser );
 
 		} );
 
@@ -97,7 +97,7 @@ var when = {
 
 		beforeEach( function() {
 
-			utils.configureUserProfile( this, this.userProfile2 );
+			utils.configureUserProfile( this, this.reviewerUser );
 
 		} );
 
@@ -245,15 +245,15 @@ describe( "Given an app configured for HTML (by default)", function() {
 		beforeEach( function( done ) {
 
 			utils.configurePolicy( this, "three-level" );
-			this.userProfile1 = { "id" : "123412341234", "roles" : [ "editor" ] };
-			this.userProfile2 = { "id" : "432143214321", "roles" : [ "reviewer" ] };
-			this.adminProfile = { "id" : "090909090909", "roles" : [ "admin" ] };
+			this.editorUser = { "id" : "123412341234", "roles" : [ "editor" ] };
+			this.reviewerUser = { "id" : "432143214321", "roles" : [ "reviewer" ] };
+			this.adminUser = { "id" : "090909090909", "roles" : [ "admin" ] };
 			// new repo for each test
 			utils.configureRepo( this );
 			var latch = new utils.Latch( 4, done );
-			utils.configureUserCollection( this, this.userProfile1, latch.count );
-			utils.configureUserCollection( this, this.userProfile2, latch.count );
-			utils.configureUserCollection( this, this.adminProfile, latch.count );
+			utils.configureUserCollection( this, this.editorUser, latch.count );
+			utils.configureUserCollection( this, this.reviewerUser, latch.count );
+			utils.configureUserCollection( this, this.adminUser, latch.count );
 			utils.configureStaticContentCollection( this, latch.count );
 
 		} );
@@ -311,7 +311,7 @@ describe( "Given an app configured for HTML (by default)", function() {
 
 					beforeEach( function( done ) {
 
-						this.collectionName = "user-" + this.userProfile1.id + "-newcollection";
+						this.collectionName = "user-" + this.editorUser.id + "-newcollection";
 						var payload = { "collectionName" : this.collectionName };
 						utils.behaviours.submitFormWithValues( this, "form", payload, done );
 

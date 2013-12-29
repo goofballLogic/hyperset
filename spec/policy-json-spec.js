@@ -100,20 +100,20 @@ var when = {
 
 		} );
 	},
-	theUserIsUser1: function() {
+	theUserIsTheEditor: function() {
 
 		beforeEach( function() {
 
-			utils.configureUserProfile( this, this.userProfile1 );
+			utils.configureUserProfile( this, this.editorProfile );
 
 		} );
 
 	},
-	theUserIsUser2: function() {
+	theUserIsTheReviewer: function() {
 
 		beforeEach( function() {
 
-			utils.configureUserProfile( this, this.userProfile2 );
+			utils.configureUserProfile( this, this.reviewerProfile );
 
 		} );
 
@@ -227,14 +227,15 @@ describe( "Given an app configured for JSON", function() {
 		beforeEach( function( done ) {
 
 			utils.configurePolicy( this, "three-level" );
-			this.userProfile1 = { "id" : "123412341234", "roles" : [ "editor" ] };
-			this.userProfile2 = { "id" : "432143214321", "roles" : [ "reviewer" ] };
+			this.editorProfile = { "id" : "123412341234", "roles" : [ "editor" ] };
+			this.reviewerProfile = { "id" : "432143214321", "roles" : [ "reviewer" ] };
 			this.adminProfile = { "id" : "090909090909", "roles" : [ "admin" ] };
+			this.plebProfile = { "id" : "111122223333", "roles" : [ ] };
 			// new repo for each test
 			utils.configureRepo( this );
 			var latch = new utils.Latch( 4, done );
-			utils.configureUserCollection( this, this.userProfile1, latch.count );
-			utils.configureUserCollection( this, this.userProfile2, latch.count );
+			utils.configureUserCollection( this, this.editorProfile, latch.count );
+			utils.configureUserCollection( this, this.reviewerProfile, latch.count );
 			utils.configureUserCollection( this, this.adminProfile, latch.count );
 			utils.configureStaticContentCollection( this, latch.count );
 
@@ -274,7 +275,7 @@ describe( "Given an app configured for JSON", function() {
 
 		describe( "for user1", function() {
 
-			when.theUserIsUser1();
+			when.theUserIsTheEditor();
 
 			describe( "When the entry point is requested", function() {
 
@@ -296,7 +297,7 @@ describe( "Given an app configured for JSON", function() {
 
 					beforeEach( function( done ) {
 
-						this.collectionName = "user-" + this.userProfile1.id + "-newcollection";
+						this.collectionName = "user-" + this.editorProfile.id + "-newcollection";
 						var addCollectionLink = utils.firstLink( this.res.json, "add-collection" );
 						var payload = { "collectionName" : this.collectionName };
 						utils.behaviours.request( this, "POST", payload, addCollectionLink.href, done );
@@ -446,7 +447,7 @@ describe( "Given an app configured for JSON", function() {
 
 				describe( "and another user tries to use the links", function() {
 
-					when.theUserIsUser2();
+					when.theUserIsTheReviewer();
 
 					beforeEach( function() {
 

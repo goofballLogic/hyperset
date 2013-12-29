@@ -1,3 +1,5 @@
+*Pending changes*
+
 #Hyperset(2) module definition
 This doc covers the client-facing API for hyperset(2 (0.3.0 - )
 
@@ -37,7 +39,7 @@ Available media types include:
 
 | Type | Meaning |
 |------|---------|
-| text/html *or* application/vnd.hyperset.application+html| HTML page <br /> - one list-item + link per collection. <br /> - self-link to application in the &lt;h1&gt; tag <br /> - one &lt;form&gt; to add new collection |
+| text/html *or* application/vnd.hyperset.application+html| HTML page <br /> - one link to the first page of collections <br /> - self-link to application in the &lt;h1&gt; tag <br /> - one &lt;form&gt; to add new collection |
 | application/json *or* application/vnd.hyperset.application+json | JSON representation of the application. |
 | application/xml *or* application/vnd.hypserset.application+xml | **TBD:** XML representation of the application. |
 | application/atom+xml | **TBD:** Atom service document listing the collections available from the server.<br /> Example available here: http://www.ietf.org/rfc/rfc5023.txt (Section 8) |
@@ -52,24 +54,20 @@ Available media types include:
 		<body>
 			<h1><a href="http://store.widgets.nearstate.com">Widgets</a></h1>
 			<h2>Application</h2>
-			<h3>Collections</h3>
 			<form action="http://store.widgets.nearstate.com" method="POST">
 				<label for="collectionName">Name</label>
 				<input name="collectionName" />
 				<input type="submit" value="Add collection" />
 			</form>
-			<ul>
-				<li><a href="http://store.widgets.nearstate.com/--collectionPath--">--collectionName--</a>
-				<li><a href="http://store.widgets.nearstate.com/--collectionPath--">--collectionName--</a>
-				. . .
-			</ul>
+			<a href="http://store.widgets.nearstate.com/--fist-page-path--">Collections</a>
 		</body>
 	</html>
+
 
 | Feature                  | Required Entitlement  |
 |--------------------------|-----------------------|
 | *Add collection* form    | add-collection        |
-| List of collections      | list-collections      |
+| Link to collections      | list-collections      |
 
 ####. . . +json
 
@@ -87,6 +85,86 @@ Available media types include:
 			"type": "application/vnd.hyperset.collection+json",
 			"verbs": [ "POST" ]
 		}, {
+			"rel": "list-collections",
+			"href": "http://store.widgets.neartstate.com/--firstPagePath--",
+			"name": "List collections",
+			"type": "application/vnd.hyperset.collection-list+json"
+		} ]
+	}
+
+| Feature                  | Required Entitlement  |
+|--------------------------|-----------------------|
+| *add-collection* link    | add-collection        |
+| *list-collections* link  | list-collections      |
+
+####. . . +xml
+
+	TBD
+	
+##vnd.hyperset.collection-list . . .
+
+Available media types include:
+
+| Type | Meaning |
+|------|---------|
+| text/html *or*<br/>application/vnd.hyperset.collection-list+html | HTML page<br /> - one list-item + link per collection<br /> - link to the application in the &lt;h1&gt; element<br /> - previous-page link (if available)<br /> - next-page link (if available)<br /> - self-link to this page of collections in the &lt;h2&gt; element|
+| application/json *or*<br/>application/vnd.hyperset.collection-list+json | JSON representation of the collection list<br />|
+
+####. . . +html
+	
+	<!DOCTYPE html>
+	<html>
+		<head>
+			<title>Widgets collections - page --pageNumber--</title>
+		</head>
+		<body>
+			<h1><a href="http://store.widgets.nearstate.com">Widgets</a></h1>
+			<h2><a href="http://store.widgets.nearstate.com/--currentPagePath--">Page --pageNumber--</a></h2>
+			<h3>Collections</h3>
+			<div>
+				<a href="http://store.widgets.nearstate.com/--previousPagePath--">Previous page</a>
+				<a href="http://store.widgets.nearstate.com/--nextPagePath--">Next page</a>
+			</div>
+			<ul>
+				<li><a href="http://store.widgets.nearstate.com/--collectionPath--">--collectionName--</a></li>
+				<li><a href="http://store.widgets.nearstate.com/--collectionPath--">--collectionName--</a></li>
+				. . .
+			</ul>
+		</body>
+	</html>
+
+
+| Feature             | Required Entitlement  |
+|---------------------|-----------------------|
+| Previous page link  | list-collections      |
+| Next page link      | list-collections      |
+
+####. . . +json
+
+	{
+		"name": "collections, page --pageNumber--",
+		"page-number": --pageNumber--,
+		"links": [ {
+			"rel": "self",
+			"href": "http://store.widgets.nearstate.com/--currentPagePath--",
+			"name": "widgets",
+			"type": "application/vnd.hyperset.collection-list+json"
+		}, {
+			"rel": "application",
+			"href": "http://store.widgets.nearstate.com",
+			"name": "widgets",
+			"type": "application/vnd.hyperset.application+json"
+    	}, {
+			"rel": "previous-page",
+			"href": "http://store.widgets.nearstate.com/--previousPagePath--",
+			"name": "Previous page",
+			"type": "application/vnd.hyperset.collection-list+json"
+		}, {
+			"rel": "next-page",
+			"href": "http://store.widgets.nearstate.com/--nextPagePath--",
+			"name": "Next page",
+			"type": "application/vnd.hyperset.collection-list+json"
+		}, {
 			"rel": "collection",
 			"href": "http://store.widgets.nearstate.com/--collectionPath--,
 			"name": "--collectionName--,
@@ -96,13 +174,15 @@ Available media types include:
 			"href": "http://store.widgets.nearstate.com/--collectionPath--,
 			"name": "--collectionName--,
 			"type": "application/vnd.hyperset.collection+json"
-		} ]
+		}, 
+			. . . 
+		]
 	}
 
 | Feature                  | Required Entitlement  |
 |--------------------------|-----------------------|
-| *add-collection* link    | add-collection        |
-| List of collection links | list-collections      |
+| *previous-page* link     | list-collections      |
+| *next-page* link         | list-collections      |
 
 ####. . . +xml
 
