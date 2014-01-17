@@ -6,6 +6,13 @@ module.exports = function( grunt ) {
 
 		watch: {
 
+			"basic": {
+
+				files: [ "src/**/*.*", "spec/**/*-basic-spec.js", "template/**/*.*" ],
+				tasks: [ "clear", "mochaTest:testHttp", "mochaTest:testJSON" ]
+
+			},
+
 			"main": {
 
 				files: [ "src/**/*.*", "spec/**/*.*", "template/**/*.*" ],
@@ -103,9 +110,11 @@ module.exports = function( grunt ) {
 
 	grunt.registerTask( "test", [ "mochaTest" ] );
 	grunt.registerTask( "repo-test", [ "exec:repoTest" ] );
+	grunt.registerTask( "basic-test", [ "mochaTest:testHttp", "mochaTest:testJSON" ] );
 	grunt.registerTask( "auto-test", [ "watch:main" ] );
 	grunt.registerTask( "auto-repo-test", [ "watch:repo" ] );
 	grunt.registerTask( "auto-policy-test", [ "watch:policy" ] );
+	grunt.registerTask( "auto-basic-test", [ "watch:basic" ] );
 
 };
 

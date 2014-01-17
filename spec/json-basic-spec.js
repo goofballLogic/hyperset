@@ -44,6 +44,23 @@ describe( "Given an app and default content type request of application/json", f
 			} );
 
 		},
+		returnsOneLink: function( rel, description, verifyLink ) {
+
+			if( typeof description == "function" ) {
+
+				verifyLink = description;
+				description = "with the expected format";
+
+			}
+			it( "it returns a single " + rel + " link" + (verifyLink ? " " + description : ""), function() {
+
+				var links = utils.findLinks( this.res.json, rel );
+				links.length.should.equal( 1 );
+				if( verifyLink ) verifyLink( links[ 0 ] );
+
+			} );
+
+		},
 		returnsAnItem: function( content ) {
 
 			it( "it returns the item with id", function() {
@@ -162,6 +179,11 @@ describe( "Given an app and default content type request of application/json", f
 
 			itAlso.returnsA200OK();
 
+			itAlso.returnsOneLink( "list-collections", "Link to first page of collections" );
+
+			throw  "Need to implement collection-list for json";
+
+/*
 			it( "it includes links to the two collections", function() {
 
 				var collectionLinks = utils.where( this.res.json.links, { "rel" : "collection" } );
@@ -183,6 +205,7 @@ describe( "Given an app and default content type request of application/json", f
 				collectionLinks[ 1 ].href.should.contain( this.config.appUrl );
 
 			} );
+*/
 
 			describe( "and a collection is POSTED via the add-collection link", function() {
 
@@ -212,6 +235,9 @@ describe( "Given an app and default content type request of application/json", f
 
 					} );
 
+					itAlso.returnsA200OK();
+
+/*
 					it( "it returns a list containing the three collections, including the new one", function() {
 
 						var collectionLinks = utils.findLinks( this.res.json, "collection" );
@@ -220,6 +246,7 @@ describe( "Given an app and default content type request of application/json", f
 						hrefs.should.contain( this.collectionURL );
 
 					} );
+*/
 
 				} );
 

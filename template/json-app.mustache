@@ -25,17 +25,17 @@
 		}
 
 	{{/permissions.addCollection}}
-	{{#collections}}
+	{{#permissions.listCollections}}
 		, {
 
-			"rel": "collection",
-			"href": "{{{href}}}",
-			"name": "{{name}}",
-			"type": "application/vnd.hyperset.collection+json"
+			"rel": "list-collections",
+			"href": "",
+			"name": "List collections",
+			"type": "application/vnd.hyperset.collection-list+json"
 
 		}
 
-	{{/collections}}
+	{{/permissions.listCollections}}
 	]
 
 }

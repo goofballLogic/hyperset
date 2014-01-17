@@ -57,6 +57,7 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 
 	app[ "get" ](		config.pathname,											renderApp					);
 	app[ "get" ](		config.pathname.replace( /\/$/, "" ),						renderApp					);
+	app[ "get" ](		config.pathname + "collections/:pageNumber",				renderCollectionList		);
 	app[ "get" ](		config.pathname + ":collectionName",						renderCollection			);
 	app[ "get" ](		config.pathname + ":collectionName/delete",					renderCollectionDelete		);
 	app[ "get" ](		config.pathname + ":collectionName/:itemId/edit",			renderItemEdit				);
@@ -106,6 +107,7 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 		this.buildDeleteCollectionStateUrl = function( collectionName ) { return _.buildCollectionUrl( collectionName ) + "/delete"; };
 		this.buildDeleteCollectionRequestsUrl = function( collectionName ) { return _.buildCollectionUrl( collectionName) + "/delete/requests"; };
 		this.buildItemEditUrl = function( collectionName, item ) { return _.buildItemUrl( collectionName, item ) + "/edit"; };
+		this.buildCollectionsPageUrl = function( pageNumber ) { return config.appUrl + "/collections/" + pageNumber; };
 
 	}
 
@@ -153,12 +155,21 @@ function Engine( config, repo, onPreInitialise, onComplete ) {
 		res.model = model;
 		res.resourceName = "app";
 		// require entitlement: listCollections
-		if( !model.permissions.listCollections ) {
+		if( model.permissions.listCollections ) {
 
-			model.collections = [ ];
-			return sendResponse( req, res, next );
+			model[ "first-page-collections-url" ] = factory.buildCollectionsPageUrl( 1 );
 
 		}
+		return sendResponse( req, res, next );
+
+	}
+
+	function renderCollectionList( req, res, next ) {
+
+		var model = { permissions: { } };
+		for( var k in config ) model[ k ] = config[ k ];
+		res.model = model;
+		res.resourceName = "collection-list";
 		repo.getCollections( function( err, collections ) {
 
 			if( err ) return next( err );

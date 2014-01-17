@@ -59,7 +59,7 @@ Available media types include:
 				<input name="collectionName" />
 				<input type="submit" value="Add collection" />
 			</form>
-			<a href="http://store.widgets.nearstate.com/--fist-page-path--">Collections</a>
+			<a href="http://store.widgets.nearstate.com/--fistPagePath--">Collections</a>
 		</body>
 	</html>
 

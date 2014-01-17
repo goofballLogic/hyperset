@@ -273,7 +273,7 @@ describe( "Given an app configured for JSON", function() {
 
 		} );
 
-		describe( "for user1", function() {
+		describe( "for the editor", function() {
 
 			when.theUserIsTheEditor();
 

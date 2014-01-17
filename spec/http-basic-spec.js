@@ -2,6 +2,20 @@ require( "chai" ).should();
 var utils = require( "./utilities" );
 var cheerio = require( "cheerio" );
 
+var when = {
+
+	"linkIsFollowed" : function( selector ) {
+
+		beforeEach( function( done ) {
+
+			var href = this.res.$body.find( selector ).attr( "href" );
+			utils.behaviours.request( this, href, done );
+
+		} );
+
+	}
+
+};
 
 var itAlso = {
 
@@ -21,6 +35,25 @@ var itAlso = {
 			this.res.statusCode.should.equal( 302 );
 
 		} );
+	},
+	"returnsA404NotFound" : function() {
+
+		it( "it returns a 404 Not Found", function() {
+
+			this.res.statusCode.should.equal( 404 );
+
+		} );
+
+	},
+	"returns": function( count, selector, description ) {
+
+		description = description || "returns " + count + " " + selector + " elements";
+		it( "it " + description, function() {
+
+			this.res.$body.find( selector ).length.should.equal( count );
+
+		} );
+
 	}
 
 };
@@ -92,27 +125,36 @@ describe( "Given an app", function() {
 
 			itAlso.returnsA200OK();
 
-			it( "it returns a list of two collections", function() {
-
-				this.res.$body.find( "ul li" ).length.should.equal( 2 );
-
-			} );
-
-			it( "it returns the collection name inside the li", function() {
-
-				this.res.$body.find( "ul li" ).eq( 1 ).text().should.contain( "collection2" );
-
-			} );
-
-			it( "it returns a link to get the collection inside the li", function() {
-
-				this.res.$body.find( "ul li" ).eq( 1 ).find( "a" ).attr( "href" ).should.contain( "collection2" );
-
-			} );
+			itAlso.returns( 1, "a:contains(Collections)", "Link to the first page of collections" );
 
 			it( "it returns a form to add a collection", function() {
 
 				this.res.$body.find( "form" ).length.should.equal( 1 );
+
+			} );
+
+			describe( "and the list-collections link is followed", function() {
+
+				when.linkIsFollowed( "a:contains(Collections)" );
+
+				it( "it returns a list of two collections", function() {
+
+console.log( this.res.body );
+					this.res.$body.find( "ul li" ).length.should.equal( 2 );
+
+				} );
+
+				it( "it returns the collection name inside the li", function() {
+
+					this.res.$body.find( "ul li" ).eq( 1 ).text().should.contain( "collection2" );
+
+				} );
+
+				it( "it returns a link to get the collection inside the li", function() {
+
+					this.res.$body.find( "ul li" ).eq( 1 ).find( "a" ).attr( "href" ).should.contain( "collection2" );
+
+				} );
 
 			} );
 
@@ -136,29 +178,11 @@ describe( "Given an app", function() {
 
 				} );
 
-				describe( "and the entry point is requested again", function() {
-
-					beforeEach( function( done ) {
-
-						this.returnedCollectionLocation = this.res.headers[ "location" ];
-						utils.behaviours.request( this, this.config.appUrl, done );
-
-					} );
-
-					it( "it returns a list of three collections including the new collection", function() {
-
-						var items = this.res.$body.find( "ul li" );
-						items.length.should.equal( 3 );
-						items.toString().should.contain( this.returnedCollectionLocation );
-
-					} );
-
-				} );
-
 				describe( "and the new collection is requested", function() {
 
 					beforeEach( function( done ) {
 
+						this.returnedCollectionLocation = this.res.headers[ "location" ];
 						utils.behaviours.request( this, this.returnedCollectionLocation, done );
 
 					} );
@@ -738,6 +762,18 @@ describe( "Given an app", function() {
 
 							itAlso.returnsA302Redirect();
 
+							describe( "and the collection is requested again", function() {
+
+								beforeEach( function( done ) {
+
+									utils.behaviours.request( this, this.returnedCollectionLocation, done );
+
+								} );
+
+								itAlso.returnsA404NotFound();
+
+							} );
+
 							describe( "and the redirect is followed", function() {
 
 								beforeEach( function( done ) {
@@ -748,14 +784,6 @@ describe( "Given an app", function() {
 								} );
 
 								itAlso.returnsA200OK();
-
-								it( "it returns a list of three collections including the new collection", function() {
-
-									var items = this.res.$body.find( "ul li" );
-									items.length.should.equal( 2 );
-									items.toString().should.not.contain( this.returnedCollectionLocation );
-
-								} );
 
 							} );
 
