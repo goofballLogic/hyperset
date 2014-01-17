@@ -1,5 +1,7 @@
 #hyperset
 
+##This is version 2
+
 Node collections (in a restful style).
 
 ##Documentation
