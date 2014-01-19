@@ -12,6 +12,7 @@ module.exports = function() {
 
 	this.After( function( callback ) {
 
+		return callback();
 		utils.ensureNoDir( "./temp", callback );
 
 	} );

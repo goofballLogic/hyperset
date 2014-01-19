@@ -187,14 +187,23 @@ function Repo( config ) {
 
 	function repoDeleteItem( collectionName, itemId, callback ) {
 
-		// collection does not exist
-		callback( new ConflictError() );
+		var itemPath = path.join( root, collectionName, itemId );
 
-		// collection exists, item does not
-		callback( new NotFoundError() );
+		repoGetCollection( collectionName, function( err, collection ) {
 
-		// item was deleted
-		callback();
+			if( err ) {
+
+				if( err instanceof NotFoundError ) return callback( new ConflictError( "Collection not found" ) );
+				return callback( err ); // unknown error
+
+			}
+			// collection exists but item does not?
+			if( !~collection.items.indexOf( itemId ) )
+				return callback( new NotFoundError() );
+
+			fs.unlink( itemPath, callback ); // ok, do it
+
+		} );
 
 	}
 

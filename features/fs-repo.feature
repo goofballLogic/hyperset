@@ -94,3 +94,18 @@ Scenario: Insert without an id
 	And I call getItem with the returned if for collection "accounts"
 	Then I should get the item back
 		| * | "Content for TBD" |
+
+Scenario: Delete an item
+	Given I call upsertItem
+		| accounts | new-item | "Hello Narmi" |
+	When I call deleteItem for item "new-item" in collection "accounts"
+	And I call getItem for item "new-item" in collection "accounts"
+	Then I should get a NotFoundError back
+
+Scenario: Delete an item in a non-existant collection
+	When I call deleteItem for item "yoyo" in collection "non-stuff"
+	Then I should get a ConflictError back
+
+Scenario: Delete a non-existant item in a collection
+	When I call deleteItem for item "total-eclipse-of-the-heart" in collection "accounts"
+	Then I should get a NotFoundError back

@@ -38,6 +38,12 @@ module.exports = function() {
 
 	});
 
+	this.When(/^I call deleteItem for item "([^"]*)" in collection "([^"]*)"$/, function(itemId, collectionName, callback) {
+
+		this.repo.deleteItem( collectionName, itemId, this.handleResponse( callback ) );
+
+	});
+
 	this.Then(/^I should get an empty collection "([^"]*)" back$/, function( collectionName, callback ) {
 
 		this.results.should.eql( {
