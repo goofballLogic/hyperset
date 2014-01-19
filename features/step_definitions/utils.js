@@ -4,8 +4,8 @@ module.exports = {
 	"ensureCleanDir" : ensureCleanDir,
 	"ensureCleanDirs" : ensureCleanDirs,
 	"ensureNoDir" : ensureNoDir,
-	"specifyTimeout" : specifyTimeout
-
+	"specifyTimeout" : specifyTimeout,
+	"buildHandleResponse" : buildHandleResponse
 };
 
 
@@ -13,18 +13,41 @@ var path = require( "path" );
 var fs = require( "fs" );
 var rr = require( "rimraf" );
 
-function specifyTimeout( world, timeout ) {
+function buildHandleResponse( scenario ) {
 
-	world.Before( function( callback ) {
+	scenario.Before( function( callback ) {
 
-		world.timeout = setTimeout( function() { throw new Error("Timed out"); }, 500 );
+		this.handleResponse = handleResponse.bind( this );
 		callback();
 
 	} );
 
-	world.After( function( callback ) {
+}
 
-		clearTimeout( world.timeout );
+function handleResponse( callback ) {
+
+	return function( err, results ) {
+
+		this.err = err;
+		this.results = results;
+		callback();
+
+	}.bind( this );
+
+}
+
+function specifyTimeout( scenario, timeout ) {
+
+	scenario.Before( function( callback ) {
+
+		scenario.timeout = setTimeout( function() { throw new Error("Timed out"); }, 500 );
+		callback();
+
+	} );
+
+	scenario.After( function( callback ) {
+
+		clearTimeout( scenario.timeout );
 		callback();
 
 	} );

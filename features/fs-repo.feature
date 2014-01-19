@@ -71,3 +71,26 @@ Scenario: deleteCollection
 	When I call deleteCollection for "users"
 	And I call getCollection for "users"
 	Then I should get a NotFoundError back
+
+Scenario: insert an Item
+	When I call upsertItem
+		| accounts | new-item | "Some new content" |
+	And I call getItem for item "new-item" in collection "accounts"
+	Then I should get the item back
+		| new-item | "Some new content" |
+
+Scenario: Update an item
+	Given I call upsertItem
+		| accounts | an-item | "Some new content" |
+	And I call upsertItem
+		| accounts | an-item | "Some updated content" |
+	And I call getItem for item "an-item" in collection "accounts"
+	Then I should get the item back
+		| an-item | "Some updated content" |
+
+Scenario: Insert without an id
+	When I call upsertItem
+		| accounts | | "Content for TBD" |
+	And I call getItem with the returned if for collection "accounts"
+	Then I should get the item back
+		| * | "Content for TBD" |

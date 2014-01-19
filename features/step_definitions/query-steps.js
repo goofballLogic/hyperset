@@ -2,12 +2,13 @@ var path = require( "path" );
 var utils = require( "./utils" );
 var should = require( "chai" ).should();
 var fs = require( "fs" );
-
+var util = require( "util" );
 var repo = require( "../../src/repos/fs-repo" );
 
 module.exports = function() {
 
 	utils.specifyTimeout( this, 500 );
+	utils.buildHandleResponse( this );
 
 	this.After( function( callback ) {
 
@@ -62,48 +63,25 @@ module.exports = function() {
 
 	this.When(/^I call getCollections$/, function(callback) {
 
-		this.repo.getCollections( function( err, results ) {
-
-			this.results = results;
-			callback( err );
-
-		}.bind( this ) );
+		this.repo.getCollections( this.handleResponse( callback ) );
 
 	});
 
 	this.When(/^I call getCollection for "([^"]*)"$/, function( collectionName, callback ) {
 
-		this.repo.getCollection( collectionName, function( err, results ) {
-
-			this.err = err;
-			this.results = results;
-			callback();
-
-		}.bind( this ) );
+		this.repo.getCollection( collectionName, this.handleResponse( callback ) );
 
 	});
 
 	this.When(/^I call getItem for item "([^"]*)" in collection "([^"]*)"$/, function(itemId, collectionName, callback) {
 
-		this.repo.getItem( collectionName, itemId, function( err, results ) {
-
-			this.err = err;
-			this.results = results;
-			callback();
-
-		}.bind( this ) );
+		this.repo.getItem( collectionName, itemId, this.handleResponse( callback ) );
 
 	});
 
 	this.When(/^I call getItemOrTemplate for item "([^"]*)" in collection "([^"]*)"$/, function(itemId, collectionName, callback) {
 
-		this.repo.getItemOrTemplate( collectionName, itemId, function( err, item ) {
-
-			this.err = err;
-			this.results = item;
-			callback();
-
-		}.bind( this ) );
+		this.repo.getItemOrTemplate( collectionName, itemId, this.handleResponse( callback ) );
 
 	} );
 
@@ -141,12 +119,23 @@ module.exports = function() {
 		should.exist( this.results, "results" );
 		var item = table.raw()[0];
 
-		this.results.should.eql( {
+		var expected = {
 
 			id : item[ 0 ],
 			content: JSON.parse( item[ 1 ] )
 
-		} );
+		};
+		var message = "\r\nExpected: " + util.inspect( expected ) + "\r\nActual: " + util.inspect( this.results ) + "\r\n";
+
+		if( expected.id == "*" ) {
+
+			this.results.content.should.eql( expected.content, message );
+
+		} else {
+
+			this.results.should.eql( expected, message );
+
+		}
 		callback();
 
 	});

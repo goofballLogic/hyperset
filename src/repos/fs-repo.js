@@ -174,7 +174,7 @@ function Repo( config ) {
 
 			var itemPath = path.join( collectionPath, id );
 			// create/overwrite the item
-			fs.writeFile( itemPath, JSON.stringify( item ), function( err ) {
+			fs.writeFile( itemPath, JSON.stringify( item.content ), function( err ) {
 
 				if( err ) return callback( err ); // unkonwn error
 				repoGetItem( collectionName, id, callback );
