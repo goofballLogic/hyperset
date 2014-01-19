@@ -85,17 +85,13 @@ function Repo( config ) {
 
 		var collection = repoGetCollection( collectionName, function( err, coll ) {
 
-			// collection not found
-			if ( err instanceof NotFoundError )
-				return callback( new ConflictError( "Collection not found" ) );
-
-			// other error
-			if ( err ) return callback( err );
+			if( err )
+				return callback( conflictOrOtherError( err ) );
 
 			fs.readFile( path.join( root, collectionName, itemId ), "utf8", function( err, data ) {
 
 				// collection found, item not found
-				if( err ) return callback( recognise( err ) );
+				if( err ) return callback( notFoundOrOtherError( err ) );
 
 				// item
 				ret.content = JSON.parse( data );
@@ -145,12 +141,9 @@ function Repo( config ) {
 		var collectionPath = path.join( root, collectionName );
 		fs.stat( collectionPath, function( err, stats ) {
 
-			if( err ) {
+			if( err )
+				return callback( notFoundOrOtherError( err ) );
 
-				if( err.code == "ENOENT" ) return callback( new NotFoundError( "Collection not found" ) );
-				return callback( err ); // unknown error
-
-			}
 			rr( collectionPath, callback ); // ok do it
 
 		} );
@@ -162,12 +155,8 @@ function Repo( config ) {
 		var collectionPath = path.join( root, collectionName );
 		repoGetCollection( collectionName, function( err, collection ) {
 
-			if( err ) {
-
-				if( err instanceof NotFoundError ) return callback( new ConflictError( "Collection not found" ) );
-				return callback( err ); // unknown error
-
-			}
+			if( err )
+				return callback( conflictOrOtherError( err ) );
 
 			// get or make id
 			var id = item.id || generators.uuid();
@@ -191,12 +180,9 @@ function Repo( config ) {
 
 		repoGetCollection( collectionName, function( err, collection ) {
 
-			if( err ) {
+			if( err )
+				return callback( conflictOrOtherError( err ) );
 
-				if( err instanceof NotFoundError ) return callback( new ConflictError( "Collection not found" ) );
-				return callback( err ); // unknown error
-
-			}
 			// collection exists but item does not?
 			if( !~collection.items.indexOf( itemId ) )
 				return callback( new NotFoundError() );
@@ -216,10 +202,18 @@ function succeedFor( ret, callback ) {
 
 }
 
-function recognise( err ) {
+function notFoundOrOtherError( err ) {
 
 	if( err && err.code == "ENOENT" )
 		return new NotFoundError( "Not found" );
+	return err;
+
+}
+
+function conflictOrOtherError( err ) {
+
+	if( err && err instanceof NotFoundError )
+		return new ConflictError( "Not found" );
 	return err;
 
 }
@@ -231,7 +225,7 @@ function forEachFile( dirpath, onEach, onSuccess, onFailure ) {
 
 	fs.readdir( dirpath, function( err, files ) {
 
-		if( err ) return onFailure( recognise( err ) );
+		if( err ) return onFailure( notFoundOrOtherError( err ) );
 
 		var latch = new CDL( files.length, onSuccess, onFailure );
 
@@ -239,7 +233,7 @@ function forEachFile( dirpath, onEach, onSuccess, onFailure ) {
 
 			fs.stat( path.join(dirpath, file), function( err, stats ) {
 
-				if( err ) return latch.bust( recognise( err ) );
+				if( err ) return latch.bust( notFoundOrOtherError( err ) );
 				onEach( file, stats, latch.count );
 
 			} );
