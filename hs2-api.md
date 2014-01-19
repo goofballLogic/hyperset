@@ -4,14 +4,7 @@
 
 ##Existing repositories
 The hyperset module comes with built-in Riak and file-based repository implementations. Other repositories are packaged as individual modules. Officially recognised repositories include:
-* Riak (hyperset.repos.riak)
-* JSON (file-based) (hyperset.repos.json)
-* [Planned] SQL Server (2005+) (hyperset-sql-server)
-* [Planned] MySQL (???) (hyperset-mysql)
-* [Planned] Amazon Dynamo DB (hyperset-dynamo-db)
-* [Planned] Microsoft Azure Tables (hyperset-azure-tables)
-
-
+* file-system (src/repos/fs-repo)
 
 ##Development process
 To develop or test a repository, use the **repository-test** program, which exercises all the various API end-points in different potential scenarios, reporting the number of pass/fails. To execute the test script, copy the ```dev/repos``` folder into your project, and execute using the following syntax:
@@ -74,7 +67,7 @@ All repositories must service the following interface. This list of methods is a
 ####for writing
 * addCollection( collectionName, callback )
 	*&nbsp;&nbsp;&harr;&nbsp; ( err )*
-* deleteCollection( collectionName )
+* deleteCollection( collectionName, callback )
 	*&nbsp;&nbsp;&harr;&nbsp; ( err )*
 * upsertItem( collectionName, item, callback )
 	*&nbsp;&nbsp;&harr;&nbsp; ( err, item )*
@@ -97,7 +90,7 @@ The ```ConflictError``` *must* have an attribute ```.code``` with value **409**,
 ##getCollections( callback )
 ###callback( err, collections )
 #####collections
-```collections``` *must* be an array of ```collection``` json objects, as described below in **getCollection( collectionName, callback )**
+```collections``` *must* be an array of collection names (strings)
 #####err
 Protocol-specific errors *should not* be returned from this call.
 
@@ -158,6 +151,9 @@ An item *must* conform to the following shape:
 		"id" : "--itemId--",
 		"content" : --itemContent--
 	}
+
+**N.B. if content is stored as a json object, it must be returned as an object, not as a string**
+
 *e.g.*
 
 	{
@@ -174,6 +170,9 @@ An item *must* conform to the following shape:
 
 ##getItemOrTemplate( collectionName, itemId, callback )
 This method should attempt to locate an item by id within the collection specified. If the item does not exist, a template should be returned instead. The template conforms to the specified shape for an item. Hyperset calls this method e.g. when rendering the HTML editing forms, which when submitted result in a call to **upsertItem**. The template should contain the specified id.
+
+*Note: This function allows a repository provider to attach other (temporary) attributes to the template for use when the item is returned via* **upsertItem***. For example, it may be useful for the provider to cache a storage path for the item id, which was needed to check whether the item already exists.*
+
 #####collectionName
 The unique identifier for the collection
 #####itemId
