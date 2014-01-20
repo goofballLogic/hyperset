@@ -12,7 +12,6 @@ module.exports = function() {
 
 	this.After( function( callback ) {
 
-		return callback();
 		utils.ensureNoDir( "./temp", callback );
 
 	} );
@@ -82,7 +81,12 @@ module.exports = function() {
 
 	this.When(/^I call getItemOrTemplate for item "([^"]*)" in collection "([^"]*)"$/, function(itemId, collectionName, callback) {
 
-		this.repo.getItemOrTemplate( collectionName, itemId, this.handleResponse( callback ) );
+		this.repo.getItemOrTemplate( collectionName, itemId, this.handleResponse( function( err ) {
+
+			this.isExistingItem = this.lastArguments[ 2 ];
+			callback( err );
+
+		}.bind( this ) ) );
 
 	} );
 
@@ -148,6 +152,14 @@ module.exports = function() {
 			"id" : itemId,
 			"content" : null
 		} );
+		callback();
+
+	});
+
+
+	this.Then(/^isExistingItem should be "([^"]*)"$/, function(isExistingItem, callback) {
+
+		this.isExistingItem.should.equal( isExistingItem === "true" );
 		callback();
 
 	});

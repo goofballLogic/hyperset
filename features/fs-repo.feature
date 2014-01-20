@@ -53,10 +53,12 @@ Scenario: getItemOrTemplate for an existing item
 	When I call getItemOrTemplate for item "1234" in collection "users"
 	Then I should get the item back
 		| 1234 | "hello world" |
+	And isExistingItem should be "true"
 
 Scenario: getItemOrTemplate for non-existing item
 	When I call getItemOrTemplate for item "9999" in collection "users"
 	Then I should get back a template with itemId "9999"
+	And isExistingItem should be "false"
 
 Scenario: addCollection
 	When I call addCollection for "subscriptions"
@@ -78,6 +80,7 @@ Scenario: insert an Item
 	And I call getItem for item "new-item" in collection "accounts"
 	Then I should get the item back
 		| new-item | "Some new content" |
+	And upsertItem should have indicated an insert
 
 Scenario: Update an item
 	Given I call upsertItem
@@ -87,6 +90,7 @@ Scenario: Update an item
 	And I call getItem for item "an-item" in collection "accounts"
 	Then I should get the item back
 		| an-item | "Some updated content" |
+	And upsertItem should have indicated an update
 
 Scenario: Insert without an id
 	When I call upsertItem
@@ -94,6 +98,7 @@ Scenario: Insert without an id
 	And I call getItem with the returned if for collection "accounts"
 	Then I should get the item back
 		| * | "Content for TBD" |
+	And upsertItem should have indicated an insert
 
 Scenario: Delete an item
 	Given I call upsertItem

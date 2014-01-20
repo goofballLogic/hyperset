@@ -110,12 +110,12 @@ function Repo( config ) {
 			if( err && err instanceof NotFoundError ) {
 
 				// repoGetItem returns NotFoundError
-				callback( null, { id: itemId, content: null } );
+				callback( null, { id: itemId, content: null }, false );
 
 			} else {
 
 				// repoGetItem returns anything other than NotFoundError
-				callback( err, item );
+				callback( err, item, !!item );
 
 			}
 
@@ -162,11 +162,16 @@ function Repo( config ) {
 			var id = item.id || generators.uuid();
 
 			var itemPath = path.join( collectionPath, id );
+			var isNewItem = !~collection.items.indexOf( id );
 			// create/overwrite the item
 			fs.writeFile( itemPath, JSON.stringify( item.content ), function( err ) {
 
-				if( err ) return callback( err ); // unkonwn error
-				repoGetItem( collectionName, id, callback );
+				if( err ) return callback( err ); // unknown error
+				repoGetItem( collectionName, id, function( err, item ) {
+
+					callback( err, item, isNewItem );
+
+				} );
 
 			} );
 

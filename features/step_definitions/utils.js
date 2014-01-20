@@ -30,6 +30,7 @@ function handleResponse( callback ) {
 
 		this.err = err;
 		this.results = results;
+		this.lastArguments = Array.prototype.slice.call( arguments );
 		callback();
 
 	}.bind( this );

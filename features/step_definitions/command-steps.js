@@ -27,7 +27,12 @@ module.exports = function() {
 		var details = table.raw()[ 0 ];
 		var item = { "id" : details[ 1 ], "content" : JSON.parse( details [ 2 ] ) };
 		var collectionName = details[ 0 ];
-		this.repo.upsertItem( collectionName, item, this.handleResponse( callback ) );
+		this.repo.upsertItem( collectionName, item, this.handleResponse( function( err ) {
+
+			this.isNewlyCreatedItem = this.lastArguments[ 2 ];
+			callback( err );
+
+		}.bind( this ) ) );
 
 	});
 
@@ -50,6 +55,20 @@ module.exports = function() {
 			"name" : collectionName,
 			"items" : [ ]
 		} );
+		callback();
+
+	});
+
+	this.Then(/^upsertItem should have indicated an insert$/, function(callback) {
+
+		this.isNewlyCreatedItem.should.equal( true );
+		callback();
+
+	});
+
+	this.Then(/^upsertItem should have indicated an update$/, function(callback) {
+
+		this.isNewlyCreatedItem.should.equal( false );
 		callback();
 
 	});

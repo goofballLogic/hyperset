@@ -70,7 +70,7 @@ All repositories must service the following interface. This list of methods is a
 * deleteCollection( collectionName, callback )
 	*&nbsp;&nbsp;&harr;&nbsp; ( err )*
 * upsertItem( collectionName, item, callback )
-	*&nbsp;&nbsp;&harr;&nbsp; ( err, item )*
+	*&nbsp;&nbsp;&harr;&nbsp; ( err, item, isNewlyCreatedItem )*
 * deleteItem( collectionName, itemId, callback )
 	*&nbsp;&nbsp;&harr;&nbsp; ( err )*
 
@@ -249,8 +249,10 @@ or (following the second shape):
 		}
 	}
 
-###callback( err, item )
-This callback *must* match the signature and semantics of the callback for **getItem**. It is suggested that this callback *might* be implemented internally by invoking the handler for **getItem** after the persistence of changes is complete. The implementation *should* return an item based which has been retrieved from the persistence store, rather than just returning the input item.
+###callback( err, item, isNewlyCreatedItem )
+This callback *must* match the  semantics of the callback for **getItem**. It is suggested that this callback *might* be implemented internally by invoking the handler for **getItem** after the persistence of changes is complete. The implementation *should* return an item based which has been retrieved from the persistence store, rather than just returning the input item.
+
+**isNewlyCreatedItem** should return truthy if the item was created as part of this call, and falsy if the item was updated/overwritten.
 
 
 
