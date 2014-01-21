@@ -6,7 +6,7 @@
 The hyperset module comes with built-in Riak and file-based repository implementations. Other repositories are packaged as individual modules. Officially recognised repositories include:
 * file-system (src/repos/fs-repo)
 
-##Development process
+##[ Changes Pending ] Development process
 To develop or test a repository, use the **repository-test** program, which exercises all the various API end-points in different potential scenarios, reporting the number of pass/fails. To execute the test script, copy the ```dev/repos``` folder into your project, and execute using the following syntax:
 
 

@@ -1,5 +1,3 @@
-*Pending changes*
-
 #Hyperset(2) module definition
 This doc covers the client-facing API for hyperset(2 (0.3.0 - )
 
