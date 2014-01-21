@@ -126,4 +126,4 @@ The dispatcher will use this to create and retain a singleton instance of the re
 	var repoConfig = config.repository;
 	var repoModule = require( repoConfig.path );
 	var repo = new repoModule.Repo( repoConfig );
-
+	var repoName = repoConfig.name;
