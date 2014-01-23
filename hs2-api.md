@@ -55,8 +55,6 @@ A repository is specified by passing an ***app-specific*** instance to the const
 ##Repository API
 All repositories must service the following interface. This list of methods is all you need to implement to have a working repository.
 ####for reading
-* getCollections( callback )
-	*&nbsp;&nbsp;&harr;&nbsp; ( err, collections )*
 * getCollection( collectionName, callback )
 	*&nbsp;&nbsp;&harr;&nbsp; ( err, collection )*
 * getItem( collectionName, itemId, callback )
@@ -84,15 +82,6 @@ Errors can either be protocol-specific, or generic. Protocol-specific errors (i.
 The ```NotFoundError``` *must* have an attribute ```.code``` with value **404**, and *should* have a prototype of ```Error```.
 #####ConflictError
 The ```ConflictError``` *must* have an attribute ```.code``` with value **409**, and *should* have a prototype of ```Error```.
-
-
-
-##getCollections( callback )
-###callback( err, collections )
-#####collections
-```collections``` *must* be an array of collection names (strings)
-#####err
-Protocol-specific errors *should not* be returned from this call.
 
 
 

@@ -61,12 +61,6 @@ module.exports = function() {
 
 	});
 
-	this.When(/^I call getCollections$/, function(callback) {
-
-		this.repo.getCollections( this.handleResponse( callback ) );
-
-	});
-
 	this.When(/^I call getCollection for "([^"]*)"$/, function( collectionName, callback ) {
 
 		this.repo.getCollection( collectionName, this.handleResponse( callback ) );

@@ -9,10 +9,6 @@ Background: some collections exist and a repo is instantiated
     	| accounts       |
     And a repo object is instantiated
 
-Scenario: getCollections
-    When I call getCollections
-    Then I should see a list of the existing collections
-
 Scenario: getCollection
 	Given some items in the "users" collection
 		| 1234 | "hello world"         |

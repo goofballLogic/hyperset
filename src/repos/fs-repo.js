@@ -26,7 +26,6 @@ function Repo( config ) {
 	// public API for the repo
 	return {
 		// queries
-		"getCollections" : repoGetCollections,
 		"getCollection" : repoGetCollection,
 		"getItem" : repoGetItem,
 		"getItemOrTemplate" : repoGetItemOrTemplate,
@@ -36,20 +35,6 @@ function Repo( config ) {
 		"upsertItem" : repoUpsertItem,
 		"deleteItem" : repoDeleteItem
 	};
-
-	function repoGetCollections( callback ) {
-
-		// list of directories
-		var ret = [];
-		var succeed = succeedFor(ret, callback);
-		forEachFile( root, function( file, stats, next ) {
-
-			if( stats.isDirectory() ) ret.push( file );
-			next();
-
-		}, succeed, callback );
-
-	}
 
 	function repoGetCollection( collectionName, callback ) {
 
