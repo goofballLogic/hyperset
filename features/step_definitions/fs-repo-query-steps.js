@@ -1,3 +1,6 @@
+/* jslint node: true */
+"use strict";
+
 var path = require( "path" );
 var utils = require( "./utils" );
 var should = require( "chai" ).should();
@@ -6,9 +9,6 @@ var util = require( "util" );
 var repo = require( "../../src/repos/fs-repo" );
 
 module.exports = function() {
-
-	utils.specifyTimeout( this, 500 );
-	utils.buildHandleResponse( this );
 
 	this.After( function( callback ) {
 

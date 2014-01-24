@@ -1,3 +1,6 @@
+/* jslint node: true */
+"use strict";
+
 module.exports = {
 
 	"ensureDir" : ensureDir,
@@ -5,13 +8,21 @@ module.exports = {
 	"ensureCleanDirs" : ensureCleanDirs,
 	"ensureNoDir" : ensureNoDir,
 	"specifyTimeout" : specifyTimeout,
-	"buildHandleResponse" : buildHandleResponse
+	"buildHandleResponse" : buildHandleResponse,
+	"setStackSize" : setStackSize
+
 };
 
 
 var path = require( "path" );
 var fs = require( "fs" );
 var rr = require( "rimraf" );
+
+function setStackSize( limit ) {
+
+	Error.stackTraceLimit = limit;
+
+}
 
 function buildHandleResponse( scenario ) {
 

@@ -158,7 +158,10 @@ An item *must* conform to the following shape:
 
 
 ##getItemOrTemplate( collectionName, itemId, callback )
-This method should attempt to locate an item by id within the collection specified. If the item does not exist, a template should be returned instead. The template conforms to the specified shape for an item. Hyperset calls this method e.g. when rendering the HTML editing forms, which when submitted result in a call to **upsertItem**. The template should contain the specified id.
+This method should attempt to locate an item by id within the collection specified. If the item does not exist, a template should be returned instead. The template conforms to the specified shape for an item. Hyperset calls this method e.g. when rendering the HTML editing forms, which when submitted result in a call to **upsertItem**.
+
+If needed, a template should contain the specified id, and should contain a "content" property with value set to ``null`` (not ``undefined``)
+
 
 *Note: This function allows a repository provider to attach other (temporary) attributes to the template for use when the item is returned via* **upsertItem***. For example, it may be useful for the provider to cache a storage path for the item id, which was needed to check whether the item already exists.*
 
@@ -174,6 +177,10 @@ If the collection does not exist, the protocol-specific ```ConflictError``` *mus
 An itemOrTemplate *must* conform to the shape outlined for items in the **getItem** method
 #####isExistingItem
 If the item was found, this value *must* be truthy. If a template is returned, this value *must* be falsy.
+
+
+##getTemplate( collectionName, itemId, callback )
+This method should callback with a template for the given id. It is not necessary to check whether the item already exists or not
 
 
 

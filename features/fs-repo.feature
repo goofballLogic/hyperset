@@ -110,3 +110,9 @@ Scenario: Delete an item in a non-existant collection
 Scenario: Delete a non-existant item in a collection
 	When I call deleteItem for item "total-eclipse-of-the-heart" in collection "accounts"
 	Then I should get a NotFoundError back
+
+Scenario: Get a template
+	When I call getTemplate
+		| accounts | proposed-item |
+	Then I should get the item back
+		| proposed-item | null |

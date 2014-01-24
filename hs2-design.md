@@ -50,7 +50,10 @@ _insert or update an item with undefined id_
 		"type" : "json",
 		"collection" : "widget",
 		"id" : null
-		"command" : "upsert"
+		"command" : "upsert",
+		"content" : {
+			"hello" : "world"
+		}
 	}
 _insert or update an item by id_
 

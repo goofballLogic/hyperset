@@ -1,3 +1,6 @@
+/* jslint node: true */
+"use strict";
+
 var path = require( "path" );
 var utils = require( "./utils" );
 var should = require( "chai" ).should();
@@ -6,9 +9,6 @@ var fs = require( "fs" );
 var repo = require( "../../src/repos/fs-repo" );
 
 module.exports = function() {
-
-	utils.specifyTimeout( this, 500 );
-	utils.buildHandleResponse( this );
 
 	this.When(/^I call addCollection for "([^"]*)"$/, function( collectionName, callback ) {
 
@@ -49,6 +49,13 @@ module.exports = function() {
 
 	});
 
+	this.When(/^I call getTemplate$/, function(table, callback) {
+
+		var row = table.raw()[ 0 ];
+		this.repo.getTemplate( row[ 0 ], row[ 1 ], this.handleResponse( callback ) );
+
+	});
+
 	this.Then(/^I should get an empty collection "([^"]*)" back$/, function( collectionName, callback ) {
 
 		this.results.should.eql( {
@@ -72,5 +79,6 @@ module.exports = function() {
 		callback();
 
 	});
+
 
 };

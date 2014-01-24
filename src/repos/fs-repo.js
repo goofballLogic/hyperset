@@ -3,10 +3,10 @@
 
 var fs = require( "fs" );
 var path = require( "path" );
-var CDL = require( "./CDL" );
-var NotFoundError = require( "./NotFoundError" );
-var ConflictError = require( "./ConflictError" );
-var generators = require( "./generators" );
+var CDL = require( "./../utils/CDL" );
+var NotFoundError = require( "./../errors/NotFoundError" );
+var ConflictError = require( "./../errors/ConflictError" );
+var generators = require( "./../utils/generators" );
 var rr = require( "rimraf" );
 
 /*
@@ -28,8 +28,9 @@ function Repo( config ) {
 		// queries
 		"getCollection" : repoGetCollection,
 		"getItem" : repoGetItem,
-		"getItemOrTemplate" : repoGetItemOrTemplate,
 		// commands
+		"getItemOrTemplate" : repoGetItemOrTemplate,
+		"getTemplate" : repoGetTemplate,
 		"addCollection" : repoAddCollection,
 		"deleteCollection" : repoDeleteCollection,
 		"upsertItem" : repoUpsertItem,
@@ -95,7 +96,11 @@ function Repo( config ) {
 			if( err && err instanceof NotFoundError ) {
 
 				// repoGetItem returns NotFoundError
-				callback( null, { id: itemId, content: null }, false );
+				repoGetTemplate( collectionName, itemId, function( err, template ) {
+
+					callback( null, template, false );
+
+				} );
 
 			} else {
 
@@ -105,6 +110,12 @@ function Repo( config ) {
 			}
 
 		} );
+
+	}
+
+	function repoGetTemplate( collectionName, itemId, callback ) {
+
+		callback( null, { id: itemId, content: null } );
 
 	}
 
