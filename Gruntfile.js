@@ -6,10 +6,23 @@ module.exports = function( grunt ) {
 
 		cucumberjs: {
 
-			src: "features",
-			options: {
-				steps: "features/step_definitions",
-				format: "pretty"
+			all: {
+
+				src: "features",
+				options: {
+					steps: "features/step_definitions"
+				}
+
+			},
+
+			coordinator: {
+
+				src: "features/coordinator.feature",
+				options: {
+					steps: "features/step_definitions",
+					format: "pretty"
+				}
+
 			}
 
 		},
@@ -21,7 +34,13 @@ module.exports = function( grunt ) {
 				files: [ "src/**/*", "features/**/*" ],
 				tasks: [ "specs" ]
 
-			}
+			},
+			specsCoordinator: {
+
+				files: [ "src/**/*", "features/**/*" ],
+				tasks: [ "cucumberjs:coordinator", "specs" ]
+
+			},
 
 		}
 
@@ -32,8 +51,7 @@ module.exports = function( grunt ) {
 	grunt.loadNpmTasks( "grunt-clear" );
 	grunt.loadNpmTasks( "grunt-cucumber" );
 
-	grunt.registerTask( "specs", [ "cucumberjs" ] );
-	grunt.registerTask( "specs-auto", [ "watch:specs" ] );
+	grunt.registerTask( "specs", [ "cucumberjs:all" ] );
 
 };
 

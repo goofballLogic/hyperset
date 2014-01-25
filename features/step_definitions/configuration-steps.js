@@ -5,16 +5,41 @@ var utils = require( "./utils" );
 var should = require( "chai" ).should();
 var fs = require( "fs" );
 var here = fs.realpathSync( "./features/step_definitions" );
-var repo = require( "./stub-repo" );
+var repo = require( "../stubs/stub-repo" );
 
 module.exports = function() {
+
+	this.Given(/^a stub policy dispatcher$/, function(callback) {
+
+		this.config = this.config || { };
+		this.config[ "policy-dispatcher" ] = here + "/../stubs/stub-policy-dispatcher";
+		callback();
+
+	});
+
+	this.Given(/^a stub response dispatcher$/, function(callback) {
+
+		this.config = this.config || { };
+		this.config[ "response-dispatcher" ] = here + "/../stubs/stub-response-dispatcher";
+		callback();
+
+	});
+
+	this.Given(/^a stub request dispatcher$/, function(callback) {
+
+		this.config = this.config || { };
+		this.config[ "request-dispatcher" ] = here + "/../stubs/stub-request-dispatcher";
+		callback();
+
+	});
 
 	this.Given( /^repository configuration is supplied$/, function( callback ) {
 
 		this.config = this.config || { };
 		this.config.repository = {
 
-			"path" : here + "/stub-repo"
+			"path" : here + "/../stubs/stub-repo",
+			"name" : "stub-repo"
 
 		};
 		callback();

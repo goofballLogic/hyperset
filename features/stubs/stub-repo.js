@@ -9,11 +9,19 @@ module.exports = {
 	"Repo" : Repo,
 	"addCollection" : addCollection,
 	"addItem" : addItem,
-	"getCollection" : getCollection
+	"getCollection" : getCollection,
+	"getConfiguration" : getConfiguration,
+	"getLastCall" : getLastCall
 
 };
 
 global.collections = { };
+
+function getLastCall() {
+
+	return global.stubRepoLastCall;
+
+}
 
 function addItem( collectionName, itemId, content ) {
 
@@ -33,11 +41,27 @@ function getCollection( collectionName ) {
 
 }
 
-function Repo() {
+function getConfiguration() {
+
+	return global.stubRepoConfiguration;
+
+}
+
+function setLastCall( op, arg1, argN ) {
+
+	var args = Array.prototype.slice.call( arguments, 0 );
+	global.stubRepoLastCall = { "op" : args.shift(), "args" : args };
+
+}
+
+function Repo( config ) {
+	delete global.stubRepoLastCall;
+	global.stubRepoConfiguration = config;
 
 	// reinitialise the static repo
 	global.collections = [];
 	this.getItem = function( collectionName, itemId, callback ) {
+		setLastCall( "get-item", collectionName, itemId );
 
 		var collection = global.collections[ collectionName ];
 		if( !collection ) {
@@ -59,6 +83,7 @@ function Repo() {
 	};
 
 	this.getCollection = function( collectionName, callback ) {
+		setLastCall( "get-collection", collectionName );
 
 		var collection = global.collections[ collectionName ];
 		if( !collection )
@@ -74,6 +99,7 @@ function Repo() {
 	};
 
 	this.getItemOrTemplate = function( collectionName, itemId, callback ) {
+		setLastCall( "get-item-or-template", collectionName, itemId );
 
 		var collection = global.collections[ collectionName ];
 		if( !collection )
@@ -93,6 +119,7 @@ function Repo() {
 	}
 
 	this.addCollection = function( collectionName, callback ) {
+		setLastCall( "add-collection", collectionName );
 
 		global.collections[ collectionName ] = { items: [ ] };
 		callback( null );
@@ -100,6 +127,7 @@ function Repo() {
 	};
 
 	this.deleteCollection = function( collectionName, callback ) {
+		setLastCall( "delete-collection", collectionName );
 
 		delete global.collections[ collectionName ];
 		callback( null );
@@ -107,6 +135,7 @@ function Repo() {
 	};
 
 	this.upsertItem = function( collectionName, item, callback ) {
+		setLastCall( "upsert-item", collectionName, JSON.parse( JSON.stringify( item ) ) );
 
 		global.collections[ collectionName ].items[ item.id ] = item.content;
 		callback( null );
@@ -114,10 +143,11 @@ function Repo() {
 	};
 
 	this.deleteItem = function( collectionName, itemId, callback ) {
+		setLastCall( "delete-item", collectionName, itemId );
 
 		delete global.collections[ collectionName ].items[ itemId ];
 		callback( null );
 
-	}
+	};
 
 }
