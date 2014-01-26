@@ -2,7 +2,7 @@
   "author": "Andrew Stewart Gibson <andrew@goofballLogic.com>",
   "name": "hyperset",
   "description": "Node collections (in a restful style)",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "homepage": "http://goofballLogic.github.com/hyperset",
   "repository": {
     "type": "git",
