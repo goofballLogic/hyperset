@@ -25,6 +25,19 @@ module.exports = function() {
 
 	});
 
+	this.When(/^the coordinator receives a request without an internal request$/, function(callback) {
+
+		this.app.middleware( null, { }, { }, this.handleResponse( callback ) );
+
+	});
+
+	this.Then(/^it should call next with an error$/, function(callback) {
+
+		this.lastArguments[ 0 ].should.be.instanceOf( Error );
+		callback();
+
+	});
+
 	this.Then( /^the request dispatcher should be correctly configured$/, function( callback ) {
 
 		var config = reqDisp.getConfiguration();

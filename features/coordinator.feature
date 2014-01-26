@@ -12,6 +12,10 @@ Background: coordinator and configuration exists
 Scenario: Configures the dispatchers
 	Then the request dispatcher should be correctly configured
 
+Scenario: Coordinator does not receive an internal request attached to the request
+	When the coordinator receives a request without an internal request
+	Then it should call next with an error
+
 Scenario: Dispatches an internal request
 	Given the request-dispatcher will return a response of
 		| { "text" : "fake response" } |
