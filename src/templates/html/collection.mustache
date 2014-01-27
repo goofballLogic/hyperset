@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ app.name }} {{ collection.name }} collection</title>
+    </head>
+    <body>
+        <h1><a href="{{ app.urls.self }}">{{ app.name }}</a></h1>
+        <h2><a href="{{ collection.urls.self }}">{{ collection.name }}</a></h2>
+        <h3>Items</h3>
+        <form id="locate-upsert-item" action="{{ collection.urls.locateUpsertItem }}" method="POST">
+            <label for="itemId">Id</label>
+            <input name="itemId" />
+            <input type="submit" value="Find add/update form" />
+        </form>
+        <form id="add-item" action="{{ collection.urls.addItem }}" method="POST">
+            <label for="content">Content</label>
+            <textarea name="content"></textarea>
+            <input type="submit" value="Add item" />
+        </form>
+        <div>
+            <a href="{{ collection.urls.delete }}">Delete collection</a>
+        </div>
+        <ul>
+            {{ #collection.items }}
+            <li><a href="{{urls.self}}">{{id}}</a>
+            {{ /collection.items }}
+        </ul>
+    </body>
+</html>

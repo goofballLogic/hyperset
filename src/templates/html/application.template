@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ app.name }} collections</title>
+    </head>
+    <body>
+        <h1><a href="{{ app.urls.self }}">Widgets</a></h1>
+        <h2>Application</h2>
+
+        <form action="{{ app.urls.findCollection }}" method="POST" name="find-collection">
+            <h3>Find a collection</h3>
+            <label for="find-collection-name">Name</label>
+            <input name="collectionName" />
+            <input type="submit" value="Find" />
+        </form>
+
+        <form action="{{ app.urls.addCollection }}" method="POST" name="add-collection">
+            <h3>Add a collection</h3>
+            <label for="collectionName">Name</label>
+            <input name="collectionName" />
+            <input type="submit" value="Add" />
+        </form>
+    </body>
+</html>
