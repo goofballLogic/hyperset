@@ -65,4 +65,11 @@ module.exports = function() {
 
 	});
 
+	this.Given(/^an internal request to view the application$/, function(callback) {
+
+		this.request = this.request || { };
+		callback();
+
+	});
+
 };

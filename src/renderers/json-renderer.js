@@ -8,9 +8,16 @@ function Renderer() {
 
 	return {
 
-		"render" : render
+		"render" : render,
+		"isReady" : isReady
 
 	};
+
+	function isReady() {
+
+		return true;
+
+	}
 
 	function render( response ) {
 

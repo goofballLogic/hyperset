@@ -18,7 +18,7 @@ var defaultRendererMappings = {
 
 };
 
-var renderableItems = [ "item", "collection", "itemOrTemplate", "error" ];
+var renderableItems = [ "application", "item", "collection", "itemOrTemplate", "error" ];
 
 function Dispatcher( config ) {
 
@@ -49,6 +49,22 @@ function Dispatcher( config ) {
 		// find the renderer for this request
 		var requestType = internalRequest.type || "text/html";
 		var renderer = determineRenderer( requestType, mappings, renderers );
+
+		onRendererReady( renderer, response, res, next );
+
+	}
+
+	var saftey = 100;
+
+	function onRendererReady( renderer, response, res, next ) {
+
+		if( !renderer.isReady() ) {
+
+			var iterate = function() { onRendererReady( renderer, response, res, next ); };
+			if( --saftey < 0 ) throw new Error( "Renderer failed to initialise" );
+			return setTimeout( iterate, 100 );
+
+		}
 
 		// get output
 		var output = "Unknown error";

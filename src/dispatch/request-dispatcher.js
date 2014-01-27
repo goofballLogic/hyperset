@@ -27,8 +27,6 @@ function Dispatcher( config ) {
 
 		// is this a query or a command?
 		request.repoName = repoName;
-		if( !request.collectionName )
-			return callback( new Error( "Invalid internal request: no collection name specified" ), null );
 
 		if( request.command )
 			return processCommand( repo, request, callback );
@@ -41,9 +39,14 @@ function Dispatcher( config ) {
 
 function processQuery( repo, request, callback ) {
 
-	// this is either get item or get collection (get item or template is considered a command)
+	// this is either get application, get item or get collection (get item or template is considered a command)
 	var collectionName = request.collectionName;
-	if( request.hasOwnProperty("id") ) {
+	if( !collectionName ) {
+
+		request.response = { "application" : { } };
+		callback( null, request );
+
+	} else if( request.hasOwnProperty("id") ) {
 
 		repo.getItem( collectionName, request.id, function( err, item ) {
 
@@ -86,6 +89,9 @@ function processUnrecognisedCommand( repo, request, callback ) {
 }
 
 function processCommand( repo, request, callback ) {
+
+	if( !request.collectionName )
+		return callback( new Error( "Invalid internal request: no collection name specified" ), null );
 
 	/* this is one of:
 		add-collection

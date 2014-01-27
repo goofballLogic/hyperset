@@ -20,5 +20,11 @@ module.exports = function() {
 
 	});
 
+	this.Then(/^the result should have a response containing an application object$/, function(callback) {
+
+		this.lastArguments[ 1 ].response.should.have.property( "application" );
+		callback();
+
+	});
 
 };

@@ -107,6 +107,42 @@ so you can see three properties within the response object. In addition, the dis
 <br /><br /><br />
 
 
+##Protocol
+The ``protocol`` component is responsible for:
+
+0. Configuring the server with the routes accepted by the application
+0. Decorating incoming http request objects with objects providing access to protocol details.
+
+An example:
+
+
+		{
+		
+			. . .
+			
+			hyperSet : {
+			
+				name: "Narmi widgets",
+				appURl : "http://www.narmi.com/api",
+				addCollectionUrl: "http://www.narmi.com/api",
+				collectionUrlTemplate: "http://www.narmi.com/api/{{collectionName}}",
+				getCollectionUrl: function( collectionName ) { . . . },
+				getUpsertItemUrl: function( collectionName ) { . . . },
+				getDeleteCollectionRequestsUrl: function( collectionName ) { . . . },
+				getItemUrlTemplate: function( collectionName ) { . . . },
+				getItemUrl: function( collectionName, itemId ) { . . . },
+				getUpsertItemUrl: function( collectionName, itemId ) { . . . }
+				
+			}
+			
+			. . .
+		
+		}
+
+
+<br /><br /><br />
+
+
 ##Policy dispatcher
 The ``policy-dispatcher`` is responsible for:
 

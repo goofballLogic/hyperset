@@ -13,11 +13,6 @@ Background: a repo exists, configuration exists, the dispatcher is instantiated
 		| users | bob | "hello" |
 		| users | jim | "world" |
 
-Scenario: malformed request without a collection name
-	Given an internal request to view a collection ""
-	When the request is dispatched to the request-dispatcher
-	Then the result should be an error
-
 Scenario: a simple view item request
 	Given an internal request to view an item "bob" in collection "users"
 	When the request is dispatched to the request-dispatcher
@@ -43,6 +38,11 @@ Scenario: a request to get an item or template (does exist)
 	Then the result should have a response containing
 		| itemOrTemplate | { "id" : "bob", "content" : "hello" } |
 		| isExistingItem | true                                  |
+
+Scenario: get application
+	Given an internal request to view the application
+	When the request is dispatched to the request-dispatcher
+	Then the result should have a response containing an application object
 
 Scenario: a request to get an item or template with no id
 	Given an internal request to get an item or template with id "" in collection "users"

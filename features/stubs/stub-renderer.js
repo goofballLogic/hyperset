@@ -31,7 +31,8 @@ function Renderer( ) {
 
 	return {
 
-		"render" : render
+		"render" : render,
+		"isReady" : function() { return true; }
 
 	};
 
