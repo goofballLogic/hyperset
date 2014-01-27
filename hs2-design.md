@@ -110,34 +110,53 @@ so you can see three properties within the response object. In addition, the dis
 ##Protocol
 The ``protocol`` component is responsible for:
 
+0. Instantiating the parser dispatcher with given configuration
 0. Configuring the server with the routes accepted by the application
+0. Instantiating the coordinator and attaching it to the application
 0. Decorating incoming http request objects with objects providing access to protocol details.
 
-An example:
+#####Configuring the server with routes:
+
+The protocol module is instantiated by giving it an ``app`` object (such as an Express app). The ``protocol`` component will then configure the app by making calls such as:
+
+	var parserDispatchModule = require( "../dispatch/parser-dispatcher" );
+	var parserDispatcher = new parserDispatchModule.Dispatcher( config );
+	var handler = parserDispatcher.dispatch;
+	. . .
+	app.all( rootUrl, handler );
+	app.all( collectionUrlTemplate, handler );
+	app.all( deleteCollectionRequestsUrlTemplate, handler );
+	app.all( itemUrlTemplate, handler );
+	app.all( upsertItemUrlTemplate, handler ); 
+	app.all( deleteItemRequestsUrlTemplate, handler );
+
+#####An example of a decorated http request
 
 
-		{
+	{
+	
+		. . .
 		
-			. . .
-			
-			hyperSet : {
-			
-				name: "Narmi widgets",
-				appURl : "http://www.narmi.com/api",
-				addCollectionUrl: "http://www.narmi.com/api",
-				collectionUrlTemplate: "http://www.narmi.com/api/{{collectionName}}",
-				getCollectionUrl: function( collectionName ) { . . . },
-				getUpsertItemUrl: function( collectionName ) { . . . },
-				getDeleteCollectionRequestsUrl: function( collectionName ) { . . . },
-				getItemUrlTemplate: function( collectionName ) { . . . },
-				getItemUrl: function( collectionName, itemId ) { . . . },
-				getUpsertItemUrl: function( collectionName, itemId ) { . . . }
-				
-			}
-			
-			. . .
+		hyperSet : {
 		
+			name: "Narmi widgets",
+			appURl : "http://www.narmi.com/api",
+			addCollectionUrl: "http://www.narmi.com/api",
+			collectionUrlTemplate: "http://www.narmi.com/api/{{collectionName}}",
+			getCollectionUrl: function( collectionName ) { . . . },
+			getUpsertItemUrl: function( collectionName ) { . . . },
+			getDeleteCollectionRequestsUrl: function( collectionName ) { . . . },
+			getItemUrlTemplate: function( collectionName ) { . . . },
+			getItemUrl: function( collectionName, itemId ) { . . . },
+			getUpsertItemUrl: function( collectionName, itemId ) { . . . }
+			
 		}
+		
+		. . .
+	
+	}
+
+
 
 
 <br /><br /><br />
