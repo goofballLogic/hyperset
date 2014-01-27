@@ -78,6 +78,16 @@ module.exports = function() {
 
 	} );
 
+	this.Given(/^a rendererMapping configuration$/, function(table, callback) {
+
+		var mapping = table.raw()[ 0 ];
+		this.config = this.config || { };
+		this.config.rendererMapping = { };
+		this.config.rendererMapping[ mapping[ 0 ] ] = mapping[ 1 ];
+		callback();
+
+	});
+
 	this.Then(/^a collection "([^"]*)" "([^"]*)" exist$/, function( collectionName, shouldOrShouldNot, callback ) {
 
 		var actual = repo.getCollection( collectionName );

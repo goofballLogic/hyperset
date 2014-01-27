@@ -1,5 +1,8 @@
 var stubReqDisp = require( "../stubs/stub-request-dispatcher" );
 var stubPolDisp = require( "../stubs/stub-policy-dispatcher" );
+var fs = require( "fs" );
+var here = fs.realpathSync( "./features/step_definitions" );
+var stubRenderer = require( "../stubs/stub-renderer" );
 
 module.exports = function() {
 
@@ -33,5 +36,25 @@ module.exports = function() {
 		callback();
 
 	});
+
+	this.Given(/^a stub renderer is configured named "([^"]*)"$/, function(stubName, callback) {
+
+		this.config = this.config || { };
+		var renderers = this.config.renderers = this.config.renderers || { };
+		renderers[ "json" ] = here + "/../stubs/stub-renderer";
+		callback();
+
+	});
+
+	this.Given(/^the stub renderer will respond with status code and content$/, function(table, callback) {
+
+		var code = parseInt( table.raw()[ 0 ][ 0 ], 0 );
+		var output = table.raw()[ 0 ][ 1 ];
+
+		stubRenderer.setNextResponse( { "code": code, "output": output } );
+		callback();
+
+	});
+
 
 };

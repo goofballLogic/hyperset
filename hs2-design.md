@@ -211,10 +211,8 @@ This is a hash of pattern - renderer-name to locate the renderer, in order of pr
 	
 **Note that the following default mappings will be added to the bottom of this list:**
 
-		".*+json$" : "json",
-		".*/json$" : "json",
-		".*+html$" : "html",
-		".*/html$" : "html"
+		".*json$" : "json",
+		".*html$" : "html"
 
 ### Instantiation
 The dispatcher will use this to create and retain singleton instances of each renderer:

@@ -13,10 +13,8 @@ var defaultRenderers = {
 
 var defaultRendererMappings = {
 
-	".*+json$" : "json",
-	".*/json$" : "json",
-	".*+html$" : "html",
-	".*/html$" : "html"
+	"^.*json$" : "json",
+	"^.*html$" : "html"
 
 };
 
@@ -24,7 +22,7 @@ var renderableItems = [ "item", "collection", "itemOrTemplate", "error" ];
 
 function Dispatcher( config ) {
 
-	var renderers = compileAndInstantiateRenderers( config, defaultRendererMappings );
+	var renderers = compileAndInstantiateRenderers( config, defaultRenderers );
 	var mappings = compileMappings( config, defaultRendererMappings );
 	// YAGNI: allow configuring in additional items that could be rendered
 	var renderTypes = renderableItems;
@@ -39,18 +37,18 @@ function Dispatcher( config ) {
 
 		var response = internalRequest.response;
 
-		if( !( request.response instanceof Object ) )
+		if( !( response instanceof Object ) )
 			err = new Error( "No response" );
 
 		// errors - response.err is preferred over err
 		if( err ) repsonse.err = response.err || err;
 
 		// what is the render type?
-		var renderType = determineRenderType( response, renderTypes );
+		response[ "item-type" ] = determineRenderType( response, renderTypes );
 
 		// find the renderer for this request
 		var requestType = internalRequest.type || "text/html";
-		var renderer = determineRenderer( requestType );
+		var renderer = determineRenderer( requestType, mappings, renderers );
 
 		// get output
 		var output = "Unknown error";
@@ -59,7 +57,7 @@ function Dispatcher( config ) {
 
 			var results = renderer.render( response );
 			output = results.output;
-			statusCode = results.statusCode;
+			statusCode = results.code;
 
 		} catch( e ) {
 
@@ -76,14 +74,15 @@ function Dispatcher( config ) {
 
 }
 
-function determineRenderer( requestType, renderers ) {
+function determineRenderer( requestType, mappings, renderers ) {
 
-	for( var i = 0; i < renderers.length; i++ ) {
+	for( var i = 0; i < mappings.length; i++ ) {
 
-		if( renderers[ i ].expr.test( requestType ) ) break;
+		if( mappings[ i ].expr.test( requestType ) ) break;
 
 	}
-	return renderers[ i ];
+	var rendererName = mappings[ i ].renderer;
+	return renderers[ rendererName ];
 
 }
 
@@ -115,6 +114,29 @@ function determineRenderType( response, renderableItems ) {
 	}
 
 */
+function compileAndInstantiateRenderers( config, defaultRenderers ) {
+
+	var compiled = compileRenderers( config, defaultRenderers );
+	var instantiated = instantiateRenderers( config, compiled );
+	return instantiated;
+
+}
+
+function instantiateRenderers( config, renderers ) {
+
+	var ret = { };
+	for( var name in renderers ) {
+
+		var path = renderers[ name ];
+		var module = require( path );
+		var renderer = new module.Renderer( config );
+		ret[ name ] = renderer;
+
+	}
+	return ret;
+
+}
+
 function compileRenderers( config, defaultRenderers ) {
 
 	var rendererConfig = config.renderers;
@@ -139,34 +161,10 @@ function compileRenderers( config, defaultRenderers ) {
 	}
 
 */
-function compileAndInstantiateRenderers( config, defaultRendererMappings ) {
-
-	var compiled = compileMappings( config, defaultRendererMappings );
-	var instantiated = instantiateRenderers( config, compiled );
-	return instantiated;
-
-}
-
-function instantiateRenderers( config, renderers ) {
-
-	var ret = { };
-	for( var name in renderers ) {
-
-		var path = renderers[ name ];
-		var module = require( path );
-		var renderer = new module.Renderer( config );
-		ret[ name ] = renderer;
-
-	}
-	return ret;
-
-}
-
 function compileMappings( config, defaultRendererMappings ) {
 
-	var mappingConfig = config.rendererMapping;
 	var ret = [ ];
-	compileAndPushMappings( ret, mappingConfig );
+	compileAndPushMappings( ret, config.rendererMapping );
 	compileAndPushMappings( ret, defaultRendererMappings );
 	return ret;
 
@@ -180,7 +178,7 @@ function compileAndPushMappings( mappings, mappingConfig ) {
 
 		mappings.push( {
 
-			"expr" : new RegExp( mappingConfig[ pattern ] ),
+			"expr" : new RegExp( pattern ),
 			"renderer" : mappingConfig[ pattern ]
 
 		} );

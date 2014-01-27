@@ -34,13 +34,7 @@ module.exports = function( grunt ) {
 				files: [ "src/**/*", "features/**/*" ],
 				tasks: [ "specs" ]
 
-			},
-			specsCoordinator: {
-
-				files: [ "src/**/*", "features/**/*" ],
-				tasks: [ "cucumberjs:coordinator", "specs" ]
-
-			},
+			}
 
 		}
 

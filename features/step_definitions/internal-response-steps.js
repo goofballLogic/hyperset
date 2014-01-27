@@ -7,6 +7,14 @@ var should = require( "chai" ).should();
 
 module.exports = function() {
 
+	this.Given(/^an internal response on the request of$/, function(table, callback) {
+
+		var request = this.request = this.request || { };
+		request.response = JSON.parse( table.raw()[ 0 ][ 0 ] );
+		callback();
+
+	});
+
 	this.Then( /^the result should have a response containing$/, function( table, callback ) {
 
 		table.raw().forEach( function( row ) {

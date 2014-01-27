@@ -57,4 +57,12 @@ module.exports = function() {
 
 	});
 
+	this.Given(/^an internal request with type "([^"]*)"$/, function(requestType, callback) {
+
+		this.request = this.request || { };
+		this.request.type = requestType;
+		callback();
+
+	});
+
 };
