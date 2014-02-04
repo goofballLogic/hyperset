@@ -178,7 +178,7 @@ module.exports = function() {
 		}.bind( this );
 		this.app.receive = function( req, callback ) {
 
-			var handlers =  Array.prototype.slice.call( (this.middleware || []), 0 );
+			var handlers =  Array.prototype.slice.call( (this.middleware || []) );
 			var handler = handlers.shift();
 			var res = null;
 			if( handler.length == 2 ) {

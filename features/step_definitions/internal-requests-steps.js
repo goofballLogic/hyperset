@@ -88,7 +88,7 @@ module.exports = function() {
 
 	this.When(/^the stub application receives the request$/, function(callback) {
 
-		this.app.receive( this.externalRequest, function( req, res ) {
+		this.app.receive( this.externalRequest || { }, function( req, res ) {
 
 			this.externalRequest = req;
 			this.internalRequest = req.HSRequest;

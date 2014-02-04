@@ -44,14 +44,15 @@ module.exports = function() {
 
 	});
 
-	this.Given(/^a protocolMapping configuration$/, function(callback) {
+	this.Given(/^a protocolMapping configuration$/, function( configs, callback ) {
 
 		this.config = this.config || { };
-		this.config.protocolMapping = [
+		var mapping = this.config.protocolMapping = [];
+		configs.raw().forEach( function( x ) {
 
-			[ "mock", ".*mock.*" ]
+			mapping.push( JSON.parse( x ) );
 
-		];
+		} );
 		callback();
 
 	});

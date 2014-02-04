@@ -41,6 +41,10 @@ function ProtocolSelector( config ) {
 
 }
 
+/*
+	this parses the configuration of named request types (protocols) to regular expression matches,
+	including the default html and json implementations
+*/
 function compileMapping( config, defaults ) {
 
 	var mapping = [];
@@ -63,12 +67,16 @@ function compileMapping( config, defaults ) {
 
 }
 
+/*
+	this is the function which actually intercepts the request and creates the internal request
+	At this point, we identify the protocol to be used and tag the request with that "type"
+*/
 function buildMiddleware( mapping ) {
 
 	return function( req, res ) {
 
 		var headers = req.headers || { };
-		var accepted = ( req.headers[ accepted ] || "" ).split( "," );
+		var accepted = ( headers[ "accept" ] || "" ).split( "," );
 		var possibleDataTypes = [ headers[ "content-type" ] ].concat( accepted ).filter( function( x ) { return !!x; } );
 		var found = null;
 
@@ -103,7 +111,10 @@ function resolve( mapping, candidate ) {
 
 }
 
-
+/*
+	All protocols get attached to the web pipeline.
+	If they recognise the protocol, they will prepare the request for the coordinator. Otherwise they will simply call next
+*/
 function attachProtocols( config, defaultProtocols, app ) {
 
 	var createAndAttach = function( modulePath ) {
