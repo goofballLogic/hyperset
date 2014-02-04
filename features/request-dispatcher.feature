@@ -4,12 +4,12 @@ Feature: Request dispatcher
 	So that hyperset can be used in various environments without reworking it
 
 Background: a repo exists, configuration exists, the dispatcher is instantiated
-	Given repository configuration is supplied
+	Given stub repository configuration is supplied
 	And a request-dispatcher has been instantiated
-	And the configured repository has some collections
+	And the stub repository has some collections
 		| users    |
 		| accounts |
-	And the configured repository has some items
+	And the stub repository has some items
 		| users | bob | "hello" |
 		| users | jim | "world" |
 
@@ -52,30 +52,30 @@ Scenario: a request to get an item or template with no id
 Scenario: add a collection
 	Given an internal request to "add" a collection "shakes"
 	When the request is dispatched to the request-dispatcher
-	Then a collection "shakes" "should" exist
+	Then a collection "shakes" "should" exist in the stub repository
 
 Scenario: delete a collection
 	Given an internal request to "delete" a collection "users"
 	When the request is dispatched to the request-dispatcher
-	Then a collection "users" "shouldn't" exist
+	Then a collection "users" "shouldn't" exist in the stub repository
 
 Scenario: insert a new item
 	Given an internal request to "upsert" an item
 		| users | felix | { "the" : "cat", "sat" : "on the mat" } |
 	When the request is dispatched to the request-dispatcher
-	Then an item "should" exist
+	Then an item "should" exist in the stub repository
 		| users | felix | { "the" : "cat", "sat" : "on the mat" } |
 
 Scenario: update an existing item
 	Given an internal request to "upsert" an item
 		| users | bob | { "new" : "stuff" } |
 	When the request is dispatched to the request-dispatcher
-	Then an item "should" exist
+	Then an item "should" exist in the stub repository
 		| users | bob | { "new" : "stuff" } |
 
 Scenario: delete an item
 	Given an internal request to "delete" an item
 		| users | bob |
 	When the request is dispatched to the request-dispatcher
-	Then an item "shouldn't" exist
+	Then an item "shouldn't" exist in the stub repository
 		| users | bob |

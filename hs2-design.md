@@ -137,14 +137,13 @@ The protocol module is instantiated by giving it an ``app`` object (such as an E
 	
 		. . .
 		
-		hyperSet : {
+		hyperset : {
 		
 			name: "Narmi widgets",
 			appURl : "http://www.narmi.com/api",
 			addCollectionUrl: "http://www.narmi.com/api",
 			collectionUrlTemplate: "http://www.narmi.com/api/{{collectionName}}",
 			getCollectionUrl: function( collectionName ) { . . . },
-			getUpsertItemUrl: function( collectionName ) { . . . },
 			getDeleteCollectionRequestsUrl: function( collectionName ) { . . . },
 			getItemUrlTemplate: function( collectionName ) { . . . },
 			getItemUrl: function( collectionName, itemId ) { . . . },
@@ -227,11 +226,84 @@ The dispatcher will use this to create and retain a singleton instance of the re
 <br /><br /><br />
 
 
-##Response dispatcher
-The `response-dispatcher` is responsible for:
+##Policy selector
+The `policy-selector` is responsible for:
 
-0. Compiling a set of available renderers (singletons)
-0. Compiling a mapping of internal request ``type`` to renderer
+0. Instantiating and attaching available protocols based on configuration
+0. Compiling a mapping of internal request ``type`` to protocol
+0. Finding the incoming content-type and matching it against the map
+0. Creating the internal request with the a ``type`` property
+
+
+The protocol-selector looks for two optional configuration objects:
+
+``protocols`` and ``protocolMapping``
+
+#####Protocol mapping configuration
+
+This is a hash of pattern - protocol-name, with the most preferred mappings at the top.
+
+	"protocolMapping" : [
+		
+		// this is our extended JSON protocol mapping
+		[ "uber-json", ".*+json$" ],
+		
+		// CSV handles both commas and tabs (fix the name?)
+		[ "CSV", ".*+csv$", "*+tsv$" ]
+		
+	]
+
+**Note** that the following default mappings get added to the bottom of this list. The matching works on a **first-matched** basis so your configured mappings will be preferred to these:
+
+		[ "json", ".*json$" ],
+		[ "html", ".*html$" ]
+
+#####Protocol negotiation
+
+The protocol-selector will look for a ``content-type`` header and if found, rely on this header for mapping. It this header is not found, it will inspect any ``accept`` header, and attempt to match the specified data types. If no mapping is found, the protocol-selector will default to ``html``.
+####Protocol configuration
+
+This is an array of modules, each of which comprises the entry point for a protocol
+
+	"protocols" : [
+	
+		// our CSV (and TSV) protocol
+		"../../custom-protocols/csv",
+		
+		// this is our extended JSON protocol (delegates to the built-in one in places)
+		"../../custom-protocols/uber-json"
+	
+	]
+
+#####Instantiation
+
+**When the protocol-selector is attached to an application**,
+the configuration is used this to resolve, instantiate and attach instances of each protocol:
+
+var renderers = { };
+
+        
+        // instantiate configured renderers
+        var modulePaths = config.protocols || [ ];
+        modulePaths.forEach( function( modulePath ) {
+           
+            var protocolModule = require( modulePath );
+            new protocolModule.Protocol( config ).attach( app );
+        
+        }
+        
+        // instantiate default renderers
+        . . .
+
+
+--
+
+<br /><br /><br />
+
+
+##Protocols (e.g. HTML protocol, JSON protocol)
+
+###Rendering cycle [ CHANGES PENDING ]
 0. Finding the internal request's ``response`` and identifying the outgoing item type
 0. Synchronously calling the renderer to obtain the output
 0. Setting the output status code
@@ -253,21 +325,6 @@ This is a hash of named modules, each of which comprises a renderer
 		
 	}
 	
-#####rendererMapping
-
-This is a hash of pattern - renderer-name to locate the renderer, in order of preference.
-
-	"rendererMapping" : {
-		
-		".*+csv$" : "CSV",
-		".*+json$" : "uber-json",
-		
-	}
-	
-**Note that the following default mappings will be added to the bottom of this list:**
-
-		".*json$" : "json",
-		".*html$" : "html"
 
 ### Instantiation
 The dispatcher will use this to create and retain singleton instances of each renderer:

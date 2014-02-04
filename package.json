@@ -26,6 +26,7 @@
     "grunt-clear": "~0.2",
     "mustache": "~0.7",
     "grunt-cucumber": "~0.2",
-    "chai": "~1.8"
+    "chai": "~1.8",
+    "superagent": "~0.16.0"
   }
 }

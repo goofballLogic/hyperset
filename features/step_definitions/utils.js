@@ -9,13 +9,21 @@ module.exports = {
 	"ensureNoDir" : ensureNoDir,
 	"specifyTimeout" : specifyTimeout,
 	"buildHandleResponse" : buildHandleResponse,
-	"setStackSize" : setStackSize
+	"setStackSize" : setStackSize,
+	"compMess" : comparisonMessage
 
 };
 
 var path = require( "path" );
 var fs = require( "fs" );
 var rr = require( "rimraf" );
+var util = require( "util" );
+
+function comparisonMessage( obj1, obj2 ) {
+
+	return util.inspect( obj1 ) + " ::::: " + util.inspect( obj2 );
+
+}
 
 function setStackSize( limit ) {
 
@@ -33,6 +41,7 @@ function buildHandleResponse( scenario ) {
 	} );
 
 }
+
 
 function handleResponse( callback ) {
 

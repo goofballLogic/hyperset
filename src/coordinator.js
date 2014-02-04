@@ -11,7 +11,6 @@ function Coordinator( config ) {
 
 	var policyDispatcher = buildDispatcher( config, "policy-dispatcher", "./dispatch/policy-dispatcher" );
 	var requestDispatcher = buildDispatcher( config, "request-dispatcher", "./dispatch/request-dispatcher" );
-	var responseDispatcher = buildDispatcher( config, "response-dispatcher", "./dispatch/response-dispatcher" );
 
 	return {
 
@@ -33,12 +32,12 @@ function Coordinator( config ) {
 		policyDispatcher.dispatch( err, req, internalRequest, function( err, requestAfterPolicy ) {
 
 			// error handling
-			addErrorResponse( requestAfterPolicy, err );
+			decorateResponseWithError( requestAfterPolicy, err );
 
 			// pre-empting of request dispatcher
 			if( requestAfterPolicy.response ) {
 
-				return responseDispatcher.dispatch( err, requestAfterPolicy, res, next );
+				return next();
 
 			}
 
@@ -46,10 +45,9 @@ function Coordinator( config ) {
 			requestDispatcher.dispatch( requestAfterPolicy, function( err, requestWithResponse ) {
 
 				// error handling
-				addErrorResponse( requestWithResponse, err );
+				decorateResponseWithError( requestWithResponse, err );
 
-				// successful
-				return responseDispatcher.dispatch( err, requestWithResponse, res, next );
+				return next();
 
 			} );
 
@@ -59,7 +57,7 @@ function Coordinator( config ) {
 
 }
 
-function addErrorResponse( internalRequest, err ) {
+function decorateResponseWithError( internalRequest, err ) {
 
 	if( !err ) return;
 	var response = internalRequest.response = internalRequest.response || { };

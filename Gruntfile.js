@@ -15,6 +15,18 @@ module.exports = function( grunt ) {
 
 			},
 
+			verbose: {
+
+				src: "features",
+				options: {
+
+					steps: "features/step_definitions",
+					format: "pretty"
+
+				}
+
+			},
+
 			coordinator: {
 
 				src: "features/coordinator.feature",
@@ -33,6 +45,12 @@ module.exports = function( grunt ) {
 
 				files: [ "src/**/*", "features/**/*" ],
 				tasks: [ "specs" ]
+
+			},
+			verboseSpecs: {
+
+				files: [ "src/**/*", "features/**/*" ],
+				tasks: [ "cucumberjs:verbose" ]
 
 			}
 

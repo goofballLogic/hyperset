@@ -4,10 +4,10 @@ Feature: Coordinator
 	So that it can process requests and respond with the help of the dispatchers
 
 Background: coordinator and configuration exists
-    Given a stub policy dispatcher
-    And a stub response dispatcher
-    And a stub request dispatcher
-    And an attached coordinator
+	Given a stub policy dispatcher
+	And a stub response dispatcher
+	And a stub request dispatcher
+	And an attached coordinator
 
 Scenario: Configures the dispatchers
 	Then the request dispatcher should be correctly configured
@@ -17,7 +17,7 @@ Scenario: Coordinator does not receive an internal request attached to the reque
 	Then it should call next with an error
 
 Scenario: Dispatches an internal request
-	Given the request-dispatcher will return a response of
+	Given the stub request-dispatcher will return a response of
 		| { "text" : "fake response" } |
 	When the coordinator receives a request
 		| { "collectionName": "users", "id": "1234" } |
@@ -25,7 +25,7 @@ Scenario: Dispatches an internal request
 		| { "collectionName": "users", "id": "1234" } |
 	And the request-dispatcher should receive the request to dispatch
 		| { "collectionName": "users", "id": "1234" } |
-	And the response-dispatcher should receive a response to dispatch
+	And the response object after coordinator is finished should include
 		| { "text" : "fake response" } |
 
 Scenario: Policy pre-empts request dispatch
@@ -34,7 +34,7 @@ Scenario: Policy pre-empts request dispatch
 	When the coordinator receives a request
 		| { "more" : "please" } |
 	Then the request-dispatcher should not receive a request
-	And the response-dispatcher should receive a response to dispatch
+	And the response object after coordinator is finished should include
 		| { "code" : 302, "message" : "Over there!", "headers" : { "Location" : "http://go.there" }, "text": "SEP field" } |
 
 Scenario: An error during policy evaluation pre-empts request dispatch
@@ -43,7 +43,7 @@ Scenario: An error during policy evaluation pre-empts request dispatch
 	When the coordinator receives a request
 		| { "more" : "please" } |
 	Then the request-dispatcher should not receive a request
-	And the response-dispatcher should receive a response to dispatch
+	And the response object after coordinator is finished should include
 		| { "code" : 500, "message" : "uh oh" } |
 
 Scenario: An error during request dispatch should result in an error response
@@ -51,5 +51,5 @@ Scenario: An error during request dispatch should result in an error response
 		| uh oh |
 	When the coordinator receives a request
 		| { "more" : "please" } |
-	Then the response-dispatcher should receive a response to dispatch
+	And the response object after coordinator is finished should include
 		| { "code" : 500, "message" : "uh oh" } |

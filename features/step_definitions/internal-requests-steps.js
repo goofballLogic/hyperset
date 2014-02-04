@@ -7,6 +7,20 @@ var should = require( "chai" ).should();
 
 module.exports = function() {
 
+	this.Given(/^the request has a content\-type of "([^"]*)"$/, function( arg1, callback ) {
+
+		this.req = this.req || { };
+	});
+
+	this.Given(/^the request has an accept header of "([^"]*)"$/, function( acceptHeader, callback ) {
+
+		var req = this.externalRequest = this.externalRequest || { };
+		var headers = req.headers = req.headers || { };
+		headers[ "accept" ] = acceptHeader;
+		callback();
+
+	});
+
 	this.Given(/^an internal request to view an item "([^"]*)" in collection "([^"]*)"$/, function( itemId, collectionName, callback ) {
 
 		this.request = this.request || { };
@@ -68,6 +82,33 @@ module.exports = function() {
 	this.Given(/^an internal request to view the application$/, function(callback) {
 
 		this.request = this.request || { };
+		callback();
+
+	});
+
+	this.When(/^the stub application receives the request$/, function(callback) {
+
+		this.app.receive( this.externalRequest, function( req, res ) {
+
+			this.externalRequest = req;
+			this.internalRequest = req.HSRequest;
+
+			callback();
+
+		}.bind( this ) );
+
+	});
+
+	this.Then(/^it should create an internal request$/, function(callback) {
+
+		should.exist( this.internalRequest );
+		callback();
+
+	});
+
+	this.Then(/^the internal request type should be "([^"]*)"$/, function(reqType, callback) {
+
+		this.internalRequest.type.should.equal( reqType );
 		callback();
 
 	});

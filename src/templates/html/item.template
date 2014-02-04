@@ -4,8 +4,8 @@
 <head>
   <meta charset="utf-8">
 
-  <title>HS - Server error</title>
-  <meta name="description" content="Internal error">
+  <title>HS - Item {{id}}</title>
+  <meta name="description" content="HTML representation of resource {{id}}">
   <meta name="author" content="Hyperset">
 
   <!--[if lt IE 9]>
@@ -15,7 +15,7 @@
 
 <body>
 
-	Sorry, but your requested an operation on an item from a missing collection.
+
 
 </body>
 

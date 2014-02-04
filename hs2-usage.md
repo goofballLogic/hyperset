@@ -1,6 +1,6 @@
 #Hyperset(2) configuration and usage
 
-##Usage
+##Usage [CHANGES PENDING]
 Configuration is passed to the constructor of the engine, along with the repository and an onReady callback. For details of creating a repo, see [here] [1].
 [1]: hs2-api.md "here"
 
